@@ -673,12 +673,9 @@ function taiDuLieuKhuonTuSheets() {
     });
 }
     function taiDanhSachKhachHangHeThong() {
-      google.script.run.withSuccessHandler(function(data) {
-        if (data && data.length > 0) {
-          DANH_SACH_KHACH_HANG_BO_NHO = data; 
-        }
-      }).taiDanhSachKhachHang(); 
-    }
+  // Đổi lệnh google.script.run cũ thành lệnh đọc trống tạm thời để không gây nghẽn trang
+  DANH_SACH_KHACH_HANG_BO_NHO = [];
+}
 
     function goyYDanhSachKhachHang(prefix) {
       var inputVal = document.getElementById(prefix + "MaKhach").value.toLowerCase().trim();
@@ -1371,22 +1368,6 @@ if(!kh) {
         timerProgressBar: true
       });
 
-      // Cập nhật ngầm dữ liệu lên Google Sheets
-      google.script.run.withSuccessHandler(function(res) {
-        if(res.thanhCong) {
-          Toast.fire({ icon: 'success', title: res.tinNhan });
-          
-          // Cập nhật lại mảng bộ nhớ tạm trong JavaScript để khi tìm kiếm không bị mất trạng thái màu
-          var itemKho = MANG_BO_NHO_KHO.find(x => x.sttHieuChinh === sttDong);
-          if(itemKho) {
-            itemKho.xuong = tenXuong;
-          }
-        } else {
-          Swal.fire({ icon: 'error', title: 'Lỗi', text: res.tinNhan, confirmButtonColor: '#dc3545' });
-          taiDuLieuKhuonTuSheets(); // Nếu lỗi thật thì mới bắt buộc load lại từ Sheets để trả trạng thái cũ
-        }
-      }).capNhatXuongKhuonBe(sttDong, tenXuong, TEN_USER_HIEN_TAI);
-    }
     //HẾT hàm nhận sự kiện click
     // Lắng nghe sự kiện cuộn chuột/cuộn màn hình của người dùng
     window.addEventListener('scroll', function() {
