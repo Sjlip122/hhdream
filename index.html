@@ -1337,38 +1337,7 @@ if(!kh) {
         }
       });
     }
-//Thêm hàm nhận sự kiện click
-    
-    // Tìm và xóa bỏ lệnh google.script.run cũ ở cuối hàm, thay bằng đoạn này:
-      goiApiGoogleScript("capNhatXuong", { sttDong: sttDong, tenXuong: tenXuong, tenUser: TEN_USER_HIEN_TAI })
-        .then(res => {
-          if (res && res.thanhCong) {
-            Toast.fire({ icon: 'success', title: "Đã chuyển sang xưởng " + tenXuong });
-            var itemKho = MANG_BO_NHO_KHO.find(x => x.sttHieuChinh === sttDong);
-            if (itemKho) {
-              itemKho.xuong = tenXuong;
-            }
-            // Cập nhật lại bản Cache cục bộ để lưu trạng thái xưởng mới luôn
-            localStorage.setItem("hh_dream_cache_kho_khuon", JSON.stringify(MANG_BO_NHO_KHO));
-          } else {
-            Swal.fire({ icon: 'error', title: 'Lỗi', text: (res ? res.tinNhan : "Không thể cập nhật") });
-            taiDuLieuKhuonTuSheets();
-          }
-        })
-        .catch(err => {
-          Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Lỗi kết nối mạng khi chuyển xưởng!' });
-          taiDuLieuKhuonTuSheets();
-        });
-      // --------------------------------------------------------------
 
-      Toast.fire({
-        title: 'Đang chuyển xưởng...',
-        icon: 'info',
-        timer: 1500,
-        timerProgressBar: true
-      });
-
-    //HẾT hàm nhận sự kiện click
     // Lắng nghe sự kiện cuộn chuột/cuộn màn hình của người dùng
     window.addEventListener('scroll', function() {
       var btn = document.getElementById("btnBackToTop");
