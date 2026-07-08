@@ -1,4 +1,4 @@
-const GOOGLE_SCRIPT_API = "https://script.google.com/macros/s/AKfycbzqjdm2SAcDzZWCpAX4MgiuGXdntwN9k-LMmOF6QLEO5gbUwnlPIhGJyUBms-xyQ7wmCg/exec";
+const GOOGLE_SCRIPT_API = "https://script.google.com/macros/s/AKfycbx8ROd8khhNxJkKq7wKx4rYTRwS2GtzsFVTm6FyvdnPQbnIznkPNc2MoS9h-_T9OMDlxg/exec";
 
 function goiApiGoogleScript(tsHanhDong, cacThamSoKhac = {}) {
   return new Promise((resolve, reject) => {
