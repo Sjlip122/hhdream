@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Foil Data System - Ultimate Version</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <style>
+    :root {
+      --bg-body: #f8f9fa;
+      --bg-card: #ffffff;
+      --text-main: #2d3748;
+      --border-color: #e2e8f0;
+      --bg-header: #f7fafc;
+      --bg-th: #edf2f7;
+      --text-th: #4a5568;
+    }
+
+    body {
+      background-color: var(--bg-body);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 12px;
+      color: var(--text-main);
+    }
+    
+    .container-fluid { max-width: 768px; padding: 8px; }
+    .bg-custom-card { background-color: var(--bg-card); border: 1px solid var(--border-color); }
+
+    /* Khung cuộn dọc tổng thể */
+    .khung-chua-foil {
+      max-height: calc(100vh - 150px);
+      overflow-y: auto;
+    }
+
+    /* Thẻ Card Job phục hồi phong cách cũ */
+    .foil-group-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      border-left: 4px solid #3182ce !important;
+      overflow: hidden;
+    }
+
+   /* THÀNH PHẦN TIÊU ĐỀ JOB: ĐỔI MÀU ĐẬM NÉT ĐỂ PHÂN TÁCH DÒNG */
+    .foil-group-header {
+      background-color: #2b6cb0 !important; /* Đổi sang tông màu xanh dương đậm nét chuyên nghiệp */
+      border-bottom: 1px solid #2b6cb0;
+      padding: 8px 12px;
+      font-weight: 700;
+      font-size: 13px;
+      color: #ffffff !important;           /* Chuyển toàn bộ chữ tiêu đề sang màu trắng nổi bật */
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Đảm bảo icon hình thư mục và chữ "JOB:" bên trong cũng chuyển sang màu trắng */
+    .foil-group-header span, 
+    .foil-group-header i.fa-folder {
+      color: #ffffff !important;
+    }
+
+    /* CHỈNH LẠI NÚT CHI TIẾT: BỎ KHUNG VIỀN VÀ NỀN TRẮNG */
+    .foil-group-header .btn-primary {
+      background-color: transparent !important; /* Đổi nền thành trong suốt hoàn toàn */
+      color: #ffffff !important;                /* Chữ và icon màu trắng tiệp với thanh tiêu đề */
+      border: none !important;                  /* XÓA BỎ HOÀN TOÀN KHUNG VIỀN VÀ BÓNG MỜ */
+      box-shadow: none !important;              
+      font-weight: 700;
+      padding: 4px 8px !important;
+      transition: all 0.2s ease;
+    }
+    
+    /* Hiệu ứng HOVER: Khi công nhân chạm tay hoặc di chuột vào nút */
+    .foil-group-header .btn-primary:hover {
+      background-color: rgba(255, 255, 255, 0.15) !important; /* Tạo một lớp nền mờ nhẹ để biết là nút bấm được */
+      color: #ffffff !important;
+      transform: scale(1.05);                                 /* Nút hơi phóng to nhẹ một chút nhìn rất thích mắt */
+    }
+
+    /* Đảm bảo icon mũi tên bên trong nút cũng có màu trắng mượt mà */
+    .foil-group-header .btn-primary i {
+      color: #ffffff !important;
+    }
+
+    /* Bảng tóm tắt phục hồi */
+    .table-summary { width: 100%; margin-bottom: 0; table-layout: fixed; }
+    .table-summary th {
+      background-color: var(--bg-th);
+      color: var(--text-th);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .table-summary td {
+      padding: 7px 12px;
+      font-size: 12px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-main);
+      vertical-align: middle;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .table-summary tr:last-child td { border-bottom: none; }
+
+    .col-width-nhu { width: 45%; }
+    .col-width-hang { width: 35%; }
+    .col-width-cuon { width: 20%; }
+
+    /* Bảng Chi tiết cuộn ngang phục hồi */
+    .vung-chi-tiet { background-color: var(--bg-header); border-top: 1px solid var(--border-color); padding: 8px; }
+    .khung-truot-ngang {
+      width: 100%; overflow-x: scroll !important;
+      border: 1px solid var(--border-color); border-radius: 4px; background-color: var(--bg-card);
+    }
+    .table-detail-full { font-size: 11px; margin-bottom: 0; white-space: nowrap; }
+    .table-detail-full th { background-color: #4a5568 !important; color: #ffffff !important; padding: 5px 8px; }
+    .table-detail-full td { padding: 5px 8px; color: var(--text-main); border-color: var(--border-color); }
+    
+    /* Thanh cuộn ngang màu xám cũ */
+    .khung-truot-ngang::-webkit-scrollbar { height: 6px; }
+    .khung-truot-ngang::-webkit-scrollbar-track { background: var(--bg-th); }
+    .khung-truot-ngang::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
+
+    #BtnBackToTop {
+      display: none; position: fixed; bottom: 20px; right: 20px; z-index: 99;
+      border: none; outline: none; background-color: #3182ce; color: white;
+      cursor: pointer; padding: 8px 12px; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .btn-compact { font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+    .badge-custom { font-size: 11px; font-weight: normal; padding: 2px 6px; }
+    
+    /* Thanh thông báo lỗi đưa lên đầu trang foil */
+    #ThongBaoChuaDangNhap {
+      display: none;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+
+/* =============CSS cho 2 nút chuyển trang==============*/
+    .nav-tabs-container {
+      background-color: #f1f5f9 !important; /* Khay nền xám mịn dài tràn viền */
+      border: 1px solid #e2e8f0 !important; /* Đường viền mỏng bao quanh */
+      padding: 4px !important;              /* Khoảng cách đệm bên trong khay */
+      border-radius: 10px !important;
+      display: flex !important;             /* Trả về d-flex để thanh dài tràn viền 100% như cũ */
+      width: 100% !important;
+      gap: 4px;
+    }
+
+    .nav-tabs-container .btn {
+      background: transparent !important;
+      color: #64748b !important;            /* Chữ màu xám cho nút chưa chọn */
+      font-size: 12px;
+      font-weight: 700;
+      padding: 10px 12px !important;
+      border-radius: 8px !important;
+      border: none !important;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;                              /* Ép các nút tự chia đều không gian thanh dài */
+      position: relative;
+      z-index: 1;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Hiệu ứng HOVER: Khi di chuột hoặc chạm tay vào nút chưa chọn */
+    .nav-tabs-container .btn:hover {
+      color: #1a202c !important;
+      background-color: rgba(255, 255, 255, 0.4) !important;
+      transform: translateY(-1px);
+    }
+
+    /* TRẠNG THÁI ACTIVE: Nổi bật tab Quản Lý Foil đang mở */
+    .nav-tabs-container .nav-active-foil {
+      background-color: #ffffff !important; /* Đổi sang nền trắng hẳn nổi bật */
+      color: #3182ce !important;            /* Chữ xanh Foil đặc trưng */
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04) !important;
+    }
+/* =============hết CSS cho 2 nút chuyển trang==============*/
+
+/* =============CSS cho khung bao toàn trang==============*/
+/* TỐI ƯU ĐỘ RỘNG CONTAINER ĐỒNG BỘ 100% VỚI INDEX CHỐNG CO GIÃN */
+    .app-container { 
+      width: 100%; 
+      max-width: 768px; /* Khóa cứng 768px giống hệt trang Index */
+      margin: 0 auto;   /* Căn giữa toàn bộ ứng dụng ra giữa màn hình */
+      padding: 12px 12px 0px 12px; 
+      box-sizing: border-box; 
+    }
+
+ /* KHUNG BAO TRẮNG BO GÓC VÀ ĐỔ BÓNG GIỐNG TRANG INDEX */
+    .main-box { 
+      background: #ffffff; 
+      border-radius: 12px; 
+      padding: 12px; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+    }   
+/* =============hết CSS cho khung bao toàn trang==============*/
+  </style>
+</head>
+<body>
+
+<button onclick="Foil_Module.cuonLenDau()" id="BtnBackToTop" title="Cuộn lên đầu"><i class="fas fa-arrow-up"></i></button>
+
+<div class="app-container">
+
+  <div id="ThongBaoChuaDangNhap" class="alert alert-danger shadow-sm border-2" role="alert">
+    <div class="d-flex align-items-center">
+      <i class="fas fa-exclamation-triangle fs-4 me-3 text-danger"></i>
+      <div>
+        <h6 class="alert-heading mb-1 fw-bold">Vui lòng đăng nhập</h6>
+        <p class="mb-0 text-muted" style="font-size: 11px;">Bạn không có quyền xem dữ liệu trực tiếp. Vui lòng quay lại hệ thống quản lý chính để xác thực tài khoản.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="GiaoDienChinhAnToan">
+    <div class="main-box">
+   <!-- ==================== 2 nút đăng nhập đăng xuất ==================== -->   
+    <div class="d-flex justify-content-between align-items-center mb-3 pb-2" style="border-bottom: 2px solid #3182ce;">
+        <h1 class="m-0 text-primary fw-bold" style="font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; color: #3182ce !important;">
+          <i class="fas fa-layer-group me-1"></i> Dữ liệu trang foil
+        </h1>
+        <div class="d-flex align-items-center gap-2 bg-light px-2 py-1 rounded border shadow-sm">
+          <span class="text-dark small" style="font-size: 12px; font-weight: 500;">
+            <i class="bi bi-person-circle text-primary me-1" style="color: #3182ce !important;"></i> <span id="lblNguoiDung">---</span>
+          </span>
+          <div style="width: 1px; height: 14px; background-color: #cbd5e0;"></div>
+          <button class="btn btn-xs btn-link p-0 text-danger fw-bold small text-decoration-none" style="font-size: 11px;" onclick="Foil_Module.thucHienDangXuatTrangFoil()">
+            Đăng xuất <i class="fas fa-sign-out-alt"></i>
+          </button>
+        </div>
+      </div>
+ 
+
+<!-- ==================== THANH MENU ĐIỀU HƯỚNG TÁCH BIỆT ĐỒNG BỘ ICON (CHỐNG CACHE) ==================== -->
+<div class="nav-tabs-container mb-3 rounded-3 border d-flex shadow-sm" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      
+      <a href="javascript:void(0)" 
+         onclick="window.top.location.href='https://script.google.com/macros/s/AKfycbx9XPzcFMaS_ukgqQ6JeaD_n9fRY_nacgkTODRjoPPtj6ltPUEy-vxWPUHDiYh7vAr6GA/exec?page=index&t=' + new Date().getTime(); return false;" 
+         class="btn">
+        <i class="fas fa-cubes me-2"></i> Khuôn Bế
+      </a>
+      
+      <a href="javascript:void(0)" 
+         onclick="window.top.location.href='https://script.google.com/macros/s/AKfycbx9XPzcFMaS_ukgqQ6JeaD_n9fRY_nacgkTODRjoPPtj6ltPUEy-vxWPUHDiYh7vAr6GA/exec?page=foil&t=' + new Date().getTime(); return false;" 
+         class="btn nav-active-foil">
+        <i class="fas fa-layer-group me-2"></i> Foil
+      </a>
+      
+    </div>
+    <!-- =================================================================================================== -->
+<!-- =================================================================== -->
+<div class="p-2 rounded shadow-sm mb-2 bg-custom-card">
+      <div class="row g-2 align-items-center">
+        <div class="col-8">
+          <div class="input-group input-group-sm position-relative d-flex align-items-center border rounded-3 overflow-hidden" style="height: 32px; background: #fff;">
+            <span class="input-group-text bg-white border-0 text-muted py-1 pe-1 ps-2"><i class="fas fa-search"></i></span>
+            
+            <input type="text" id="Foil_TxtTimKiem" class="form-control border-0 py-1 ps-1 pe-5" style="box-shadow: none; focus: none;" placeholder="Tìm Mã Job, Tên Nhũ, Mã Hàng..." oninput="Foil_Module.xuLyAnBatNutXoaNhanh()">
+            
+            <button id="Foil_BtnClearSearch" class="btn bg-white border-0 text-muted p-0 d-none" type="button" onclick="Foil_Module.clearThanhTimKiemFoil()" title="Xóa chữ nhanh" style="position: absolute; right: 10px; z-index: 5; font-size: 13px;">
+              <i class="bi bi-x-circle-fill"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-4 text-end">
+          <span class="text-muted" style="font-size: 11px;" id="Foil_LblTongSoDong">...</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="khung-chua-foil" id="Foil_DanhSachGộp" onscroll="Foil_Module.kiemTraNutCuon(this)">
+      <div class="text-center py-4 text-muted bg-white rounded border bg-custom-card">
+        <span class="spinner-border spinner-border-sm text-primary me-2" role="status"></span> Đang nạp...
+      </div>
+    </div>
+    
+    <div class="text-center mt-2 mb-4 d-none" id="KhungNutXemThem">
+      <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4" onclick="Foil_Module.hienThiThemJob()">
+        <i class="fas fa-plus-circle me-1"></i>Xem thêm mã Job
+      </button>
+    </div>
+  </div> 
+  </div>
+</div>
+
+<script>
+var Foil_Module = {
+  mangDuLieuGoc: [],
+  mangMangHeaders: [], // Mảng chứa tiêu đề động lấy từ sheet
+  mangDaGộp: {},
+  mangKeysDaLoc: [],  
+  viTriHienTai: 0,    
+  soLuongMoiTrang: 20, 
+  maJobDangMo: null,
+  boHenGioTuDongDong: null,
+  thoiGianDongTuDong: 30000,
+
+init: function() {
+    // Kích hoạt nạp thẳng dữ liệu Foil ngay khi mở tab
+    this.lamMoiDuLieu();
+
+    // Đặt lệnh hiển thị tên người dùng ngầm chờ 100 mili-giây để HTML dựng xong hoàn toàn
+    setTimeout(function() {
+      var savedUser = localStorage.getItem("hh_dream_user") || "Công nhân";
+      var lblUser = document.getElementById("lblNguoiDung");
+      if (lblUser) { 
+        lblUser.innerText = savedUser; 
+      }
+    }, 100);
+  },
+
+  // Hàm xử lý đăng xuất an toàn đồng bộ với trang index
+  thucHienDangXuatTrangFoil: function() {
+    // Sử dụng thư viện SweetAlert2 có sẵn trong dự án của bạn để hiển thị hộp thoại hỏi công nhân
+    if (typeof Swal !== 'undefined') {
+      Swal.fire({
+        title: 'Mày muốn thoát ư?',
+        text: "Mày sẽ phải đăng nhập lại ở trang chủ khuôn bế.",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3182ce',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Đăng xuất',
+        cancelButtonText: 'Hủy'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Xóa sạch dấu vết đăng nhập
+          localStorage.removeItem("hh_dream_user");
+          localStorage.removeItem("hh_dream_login_time");
+          localStorage.removeItem("hh_dream_cache_kho_khuon");
+          
+          // Ép trình duyệt chuyển hướng quay lại trang index gốc để hiện form đăng nhập
+          window.top.location.href = 'https://script.google.com/macros/s/AKfycbx9XPzcFMaS_ukgqQ6JeaD_n9fRY_nacgkTODRjoPPtj6ltPUEy-vxWPUHDiYh7vAr6GA/exec?page=index';
+        }
+      });
+    } else {
+      // Phương án dự phòng nếu trình duyệt chưa nạp xong thư viện Swal
+      if (confirm("Mày muốn đăng xuất khỏi hệ thống chứ?")) {
+        localStorage.removeItem("hh_dream_user");
+        localStorage.removeItem("hh_dream_login_time");
+        window.top.location.href = 'https://script.google.com/macros/s/AKfycbx9XPzcFMaS_ukgqQ6JeaD_n9fRY_nacgkTODRjoPPtj6ltPUEy-vxWPUHDiYh7vAr6GA/exec?page=index';
+      }
+    }
+  },
+
+  taiLaiLamMoiXoaCache: function() {
+    Foil_Module.lamMoiDuLieu();
+  },
+
+  lamMoiDuLieu: function() {
+    var khungChua = document.getElementById("Foil_DanhSachGộp");
+    var lblTong = document.getElementById("Foil_LblTongSoDong");
+    document.getElementById("KhungNutXemThem").classList.add("d-none");
+    
+    khungChua.innerHTML = `<div class="text-center py-4 text-muted bg-white rounded border bg-custom-card">
+                            <span class="spinner-border spinner-border-sm text-primary me-2" role="status"></span> Đang đồng bộ...
+                           </div>`;
+    lblTong.innerText = "Đang tải...";
+    
+    google.script.run
+      .withSuccessHandler(function(phanHoi) {
+        if (phanHoi && phanHoi.success === true) {
+          Foil_Module.mangDuLieuGoc = phanHoi.data;
+          Foil_Module.mangMangHeaders = phanHoi.headers; // Nhận tiêu đề động
+          Foil_Module.xuLyGopDuLieu(Foil_Module.mangDuLieuGoc);
+        } else {
+          khungChua.innerHTML = `<div class="alert alert-danger py-2 text-center bg-custom-card">Lỗi dữ liệu</div>`;
+          lblTong.innerText = "Lỗi";
+        }
+      })
+      .withFailureHandler(function() {
+        khungChua.innerHTML = `<div class="alert alert-danger py-2 text-center bg-custom-card">Lỗi kết nối.</div>`;
+        lblTong.innerText = "Lỗi";
+      })
+      .API_taiDuLieuFoil();
+  },
+
+  xuLyGopDuLieu: function(mangData) {
+    var doiTuongGop = {};
+    mangData.forEach(function(row) {
+      var keyJob = row.maJob;
+      if (!doiTuongGop[keyJob]) {
+        doiTuongGop[keyJob] = { maJob: keyJob, danhSachTomTat: [], danhSachChiTiet: [] };
+      }
+      doiTuongGop[keyJob].danhSachChiTiet.push(row);
+      
+      var soCuonSo = parseFloat(row.soCuonLon) || 0;
+      var checkTrung = doiTuongGop[keyJob].danhSachTomTat.find(function(item) {
+        return item.tenNhu === row.tenNhu && item.maHang === row.maHang;
+      });
+      
+      if (checkTrung) {
+        checkTrung.soCuonLon = (parseFloat(checkTrung.soCuonLon) + soCuonSo).toString();
+      } else {
+        doiTuongGop[keyJob].danhSachTomTat.push({
+          tenNhu: row.tenNhu, maHang: row.maHang, soCuonLon: row.soCuonLon
+        });
+      }
+    });
+    
+    this.mangDaGộp = doiTuongGop;
+    this.mangKeysDaLoc = Object.keys(doiTuongGop);
+    this.viTriHienTai = 0;
+    
+    document.getElementById("Foil_DanhSachGộp").innerHTML = ""; 
+    this.hienThiThemJob(); 
+  },
+
+  hienThiThemJob: function() {
+    var khungChua = document.getElementById("Foil_DanhSachGộp");
+    var lblTong = document.getElementById("Foil_LblTongSoDong");
+    
+    if (this.mangKeysDaLoc.length === 0) {
+      khungChua.innerHTML = `<div class="text-center py-4 text-muted bg-white rounded border bg-custom-card">Không có dữ liệu phù hợp.</div>`;
+      lblTong.innerText = "0 Job";
+      document.getElementById("KhungNutXemThem").classList.add("d-none");
+      return;
+    }
+    
+    var gioiHan = Math.min(this.viTriHienTai + this.soLuongMoiTrang, this.mangKeysDaLoc.length);
+    var chuoiHtml = "";
+    
+    for (var i = this.viTriHienTai; i < gioiHan; i++) {
+      var maJobKey = this.mangKeysDaLoc[i];
+      var thongTinJob = this.mangDaGộp[maJobKey];
+      
+      chuoiHtml += `
+        <div class="foil-group-card" id="card_container_${thongTinJob.maJob}" 
+             onmousemove="Foil_Module.lamMoiBoDemThoiGian('${thongTinJob.maJob}')" 
+             ontouchstart="Foil_Module.lamMoiBoDemThoiGian('${thongTinJob.maJob}')">
+          <div class="foil-group-header">
+            <span><i class="fas fa-folder text-muted me-1"></i>JOB: <span class="font-monospace">${thongTinJob.maJob}</span></span>
+            <button class="btn btn-sm btn-primary btn-compact shadow-sm fw-medium" type="button" onclick="Foil_Module.onOffChiTiet('${thongTinJob.maJob}')">
+              <i class="fas fa-chevron-down me-1" id="icon_btn_${thongTinJob.maJob}"></i><span id="text_btn_${thongTinJob.maJob}">Chi tiết</span>
+            </button>
+          </div>
+          <table class="table table-summary">
+            <colgroup><col class="col-width-nhu"><col class="col-width-hang"><col class="col-width-cuon"></colgroup>
+            <thead><tr><th>Tên Nhũ</th><th>Mã Hàng</th><th class="text-end">Số Cuộn</th></tr></thead>
+            <tbody>
+      `;
+      
+      thongTinJob.danhSachTomTat.forEach(function(nhu) {
+        var mauSoCuon = (parseFloat(nhu.soCuonLon) >= 5) ? 'text-danger fw-bold' : 'text-secondary';
+        chuoiHtml += `
+          <tr>
+            <td><span class="badge bg-info text-dark badge-custom">${nhu.tenNhu}</span></td>
+            <td class="text-secondary font-monospace fw-semibold">${nhu.maHang}</td>
+            <td class="text-end font-monospace ${mauSoCuon}">${nhu.soCuonLon || "0"}</td>
+          </tr>
+        `;
+      });
+      
+      chuoiHtml += `
+            </tbody>
+          </table>
+          <div class="vung-chi-tiet d-none" id="details_${thongTinJob.maJob}">
+            <div class="khung-truot-ngang shadow-sm">
+              <table class="table table-sm table-bordered table-striped table-hover align-middle table-detail-full">
+                <thead>
+                  <tr>
+      `;
+      
+      // VẼ TIÊU ĐỀ BẢNG CHI TIẾT CHẠY ĐỘNG THEO SHEET
+      Foil_Module.mangMangHeaders.forEach(function(tieuDe) {
+        if(!tieuDe || tieuDe.toString().trim() === "") return;
+        chuoiHtml += `<th>${tieuDe}</th>`;
+      });
+      
+      chuoiHtml += `
+                  </tr>
+                </thead>
+                <tbody>
+      `;
+      
+      // ĐỔ DỮ LIỆU CÁC CỘT CHI TIẾT CHẠY ĐỘNG THEO SHEET
+      thongTinJob.danhSachChiTiet.forEach(function(nhu) {
+        chuoiHtml += `<tr>`;
+        
+        Foil_Module.mangMangHeaders.forEach(function(tieuDe, indexCot) {
+          if(!tieuDe || tieuDe.toString().trim() === "") return;
+          
+          var giaTriO = nhu.cacCotDuLieu[indexCot] || "";
+          var styleO = "";
+          
+          // Khôi phục logic định dạng cũ theo tên trị cột (không cố định index cũ)
+          if (indexCot === 0) styleO = 'class="text-center text-muted"'; // Cột STT
+          if (indexCot === 2) giaTriO = `<span class="badge bg-info text-dark badge-custom">${giaTriO}</span>`; // Cột Tên Nhũ
+          if (indexCot === 9) styleO = 'class="text-end font-monospace text-success fw-bold"'; // Tổng mét
+          if (indexCot === 10) styleO = 'class="text-end font-monospace text-danger fw-bold"'; // Số cuộn lớn
+          
+          // Cột cách gia công đổi màu chữ nếu chứa chữ "nổi"
+          if (indexCot === 11 && giaTriO.toLowerCase().includes("nổi")) {
+            styleO = 'style="color: #b57d00; font-weight:600;"';
+          }
+          
+          chuoiHtml += `<td ${styleO}>${giaTriO}</td>`;
+        });
+        
+        chuoiHtml += `</tr>`;
+      });
+      
+      chuoiHtml += `</tbody></table></div></div></div>`;
+    }
+    
+    if (this.viTriHienTai === 0) {
+      khungChua.innerHTML = chuoiHtml;
+    } else {
+      khungChua.insertAdjacentHTML('beforeend', chuoiHtml);
+    }
+    
+    this.viTriHienTai = gioiHan;
+    lblTong.innerText = "Hiển thị: " + this.viTriHienTai + "/" + this.mangKeysDaLoc.length + " Jobs";
+    
+    if (this.viTriHienTai < this.mangKeysDaLoc.length) {
+      document.getElementById("KhungNutXemThem").classList.remove("d-none");
+    } else {
+      document.getElementById("KhungNutXemThem").classList.add("d-none");
+    }
+  },
+
+  onOffChiTiet: function(maJob) {
+    if (this.maJobDangMo !== null && this.maJobDangMo !== maJob) {
+      this.dongKhungChiTiet(this.maJobDangMo);
+    }
+    var vungChiTiet = document.getElementById("details_" + maJob);
+    var iconBtn = document.getElementById("icon_btn_" + maJob);
+    var textBtn = document.getElementById("text_btn_" + maJob);
+    
+    if (vungChiTiet.classList.contains("d-none")) {
+      vungChiTiet.classList.remove("d-none");
+      iconBtn.className = "fas fa-chevron-up me-1"; textBtn.innerText = "Thu gọn";
+      this.maJobDangMo = maJob;
+      this.lamMoiBoDemThoiGian(maJob);
+    } else {
+      this.dongKhungChiTiet(maJob);
+    }
+  },
+
+  dongKhungChiTiet: function(maJob) {
+    var vungChiTiet = document.getElementById("details_" + maJob);
+    if (vungChiTiet) {
+      vungChiTiet.classList.add("d-none");
+      document.getElementById("icon_btn_" + maJob).className = "fas fa-chevron-down me-1";
+      document.getElementById("text_btn_" + maJob).innerText = "Chi tiết";
+    }
+    if (this.maJobDangMo === maJob) {
+      this.maJobDangMo = null; clearTimeout(this.boHenGioTuDongDong);
+    }
+  },
+
+  lamMoiBoDemThoiGian: function(maJob) {
+    if (this.maJobDangMo !== maJob) return;
+    clearTimeout(this.boHenGioTuDongDong);
+    this.boHenGioTuDongDong = setTimeout(function() {
+      Foil_Module.dongKhungChiTiet(maJob);
+    }, this.thoiGianDongTuDong);
+  },
+// Hàm 1: Kiểm tra xem ô tìm kiếm có chữ không để bật/ẩn nút X
+  xuLyAnBatNutXoaNhanh: function() {
+    var oTimKiem = document.getElementById("Foil_TxtTimKiem");
+    var btnXoaNhanh = document.getElementById("Foil_BtnClearSearch");
+    
+    if (oTimKiem && btnXoaNhanh) {
+      if (oTimKiem.value.trim() !== "") {
+        btnXoaNhanh.classList.remove("d-none"); // Có chữ thì hiện nút X
+      } else {
+        btnXoaNhanh.classList.add("d-none");    // Trống chữ thì ẩn nút X
+      }
+    }
+    
+    // Đồng thời chạy lệnh lọc danh sách Job luôn
+    this.locDuLieu();
+  },
+
+  // Hàm 2: Thao tác khi công nhân bấm chuột vào nút X để làm sạch ô nhập liệu
+  clearThanhTimKiemFoil: function() {
+    var oTimKiem = document.getElementById("Foil_TxtTimKiem");
+    var btnXoaNhanh = document.getElementById("Foil_BtnClearSearch");
+    
+    if (oTimKiem && btnXoaNhanh) {
+      oTimKiem.value = "";              // Xóa sạch chữ trong ô
+      btnXoaNhanh.classList.add("d-none"); // Ẩn nút X đi ngay lập tức
+    }
+    
+    // Trả danh sách Foil về trạng thái ban đầu khi chưa lọc
+    this.locDuLieu();
+  },
+  locDuLieu: function() {
+    var tuKhoa = document.getElementById("Foil_TxtTimKiem").value.toLowerCase().trim();
+    if (this.maJobDangMo) this.dongKhungChiTiet(this.maJobDangMo);
+    
+    if (tuKhoa === "") {
+      this.mangKeysDaLoc = Object.keys(this.mangDaGộp);
+    } else {
+      var doiTuongGoc = this.mangDaGộp;
+      this.mangKeysDaLoc = Object.keys(doiTuongGoc).filter(function(key) {
+        var job = doiTuongGoc[key];
+        var khopThongTinBenTrong = job.danhSachTomTat.some(function(tombat) {
+          return tombat.tenNhu.toLowerCase().includes(tuKhoa) || tombat.maHang.toLowerCase().includes(tuKhoa);
+        });
+        return key.toLowerCase().includes(tuKhoa) || khopThongTinBenTrong;
+      });
+    }
+    
+    this.viTriHienTai = 0;
+    document.getElementById("Foil_DanhSachGộp").innerHTML = "";
+    this.hienThiThemJob();
+  },
+
+  kiemTraNutCuon: function(khungCuon) {
+    var btn = document.getElementById("BtnBackToTop");
+    if (khungCuon.scrollTop > 300) {
+      btn.style.display = "block";
+    } else {
+      btn.style.display = "none";
+    }
+  },
+
+  cuonLenDau: function() {
+    document.getElementById("Foil_DanhSachGộp").scrollTo({ top: 0, behavior: 'smooth' });
+  }
+};
+
+document.addEventListener("DOMContentLoaded", function() {
+  Foil_Module.init();
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

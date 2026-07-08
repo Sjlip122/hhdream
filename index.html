@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Hệ thống HH Dream</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { margin: 0; padding: 0; background-color: #f4f6f9; font-family: -apple-system, sans-serif; overflow-x: hidden; }
+    /* TỐI ƯU ĐỘ RỘNG CONTAINER BẰNG TRANG FOIL ĐỂ CHỐNG CO GIÃN */
+    .app-container { 
+      width: 100%; 
+      max-width: 768px; /* Khóa cứng 768px giống hệt trang Foil */
+      margin: 0 auto;   /* Căn giữa toàn bộ ứng dụng ra giữa màn hình nếu xem trên máy tính */
+      padding: 12px 12px 0px 12px; 
+      box-sizing: border-box; 
+    } /* Giảm padding đáy về 0px */
+
+/* KHUNG TIÊU ĐỀ CỐ ĐỊNH TRÊN ĐẦU */
+    .sticky-header-panel {
+      position: -webkit-sticky;
+      position: sticky;
+      top: 0;
+      background-color: #ffffff !important; /* Đổ màu nền trùng màu body để che dữ liệu cuộn ở dưới */
+      z-index: 1020;
+      padding-top: 12px;
+      padding-bottom: 4px;
+      margin-top: -12px; /* Triệt tiêu khoảng đệm cha */
+    }
+
+    /* Tạo không gian cuộn dọc riêng phía dưới header */
+    #dataList {
+      margin-bottom: 0px !important;
+      padding-bottom: 80px !important; /* Tạo khoảng trống đáy để không bị che nút Xem thêm */
+    }
+/* hết phần khóa cứng phần tiêu đề*/
+
+
+    .login-box { max-width: 360px; margin: 40px auto; background: #ffffff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+    .main-box { background: #ffffff; border-radius: 12px; padding: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .app-title { text-align: center; color: #0d6efd; font-weight: 700; font-size: 18px; text-transform: uppercase; margin-bottom: 15px; border-bottom: 2px solid #0d6efd; padding-bottom: 8px; }
+    
+    .card-row { background: #ffffff; border-radius: 8px; margin-bottom: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #edf2f7; overflow: hidden; }
+    
+    .card-header-toggle { padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; background: #ffffff; user-select: none; border-left: 5px solid #198754; }
+    .card-row.is-scraped .card-header-toggle { border-left: 5px solid #dc3545; background-color: #fff5f5; opacity: 0.85; }
+    .card-row.is-deleted .card-header-toggle { border-left: 5px solid #6c757d; background-color: #f8f9fa; opacity: 0.65; }
+    
+    /* 1. ĐƯA TIÊU ĐỀ CARD-HEADER-TITLE VỀ DẠNG CHỮ THƯỜNG THANH MẢNH */
+    .card-header-title { 
+      font-weight: 500 !important; /* Hạ từ 700 xuống 500 để chữ mỏng đi rõ rệt */
+      font-size: 14px; 
+      color: #2d3748; 
+      display: flex; 
+      align-items: center; 
+      gap: 0px; 
+      width: 100%; 
+    }
+
+    /* 2. CHỈNH CHỮ MÃ KHUÔN MẢNH VÀO LỀ */
+    .col-ma-khuon {
+      width: 75px; 
+      display: inline-block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 500 !important; /* Đảm bảo mã khuôn không bị đậm nét xù xì */
+    }
+
+    /* Dấu gạch ngang phân cách */
+    .col-phay {
+      width: 15px;
+      text-align: center;
+      color: #718096;
+    }
+
+    /* 3. ĐIỀU CHỈNH LẠI CÁC KHUNG CHỨA ĐỂ KHÔNG ĐẨY NHAU */
+    .col-vi-tri {
+      width: 52px !important;        /* Bóp nhỏ cột chứa vị trí kệ từ 60px xuống 52px */
+      display: inline-block;
+    }
+
+    /* 3. Cột Cụm nút xưởng (BL / TH) */
+    .col-cum-xuong {
+      width: 58px !important;        /* Bóp nhỏ cụm nút xưởng từ 75px xuống còn 58px */
+      display: inline-flex;
+      justify-content: center;
+      gap: 2px !important;           /* Thu hẹp khoảng cách giữa nút BL và TH chỉ còn 2px */
+    }
+    .card-body-content { display: none; padding: 10px 12px; background: #fafafa; border-top: 1px solid #edf2f7; }
+    
+    .info-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #e2e8f0; padding: 5px 0; }
+    .info-item:last-child { border-bottom: none; }
+    .info-lbl { font-size: 12px; color: #718096; font-weight: 600; }
+    .info-val { font-size: 13px; font-weight: 600; color: #1a202c; text-align: right; }
+    
+    /* 1. ÉP PHẲNG VÀ CĂN ĐỀU TRỤC DỌC CHO Ô VỊ TRÍ KỆ MÀU XANH */
+    .vi-tri-ke-style {
+      background-color: #0d6efd !important;
+      color: #ffffff !important;
+      text-transform: uppercase !important;
+      font-size: 11px !important;
+      font-weight: 500 !important;
+      padding: 0px !important;
+      height: 20px !important;
+      /* Hạ line-height xuống 18px hoặc 19px nếu thấy chữ bên trong bị lệch dưới */
+      line-height: 20px !important; 
+      border-radius: 3px !important;
+      min-width: 48px !important;
+      text-align: center;
+      display: inline-block !important;
+      letter-spacing: 0px;
+      /* THUỘC TÍNH QUYẾT ĐỊNH: Ép trục dọc về chính giữa dòng, chống nhô cao */
+      vertical-align: middle !important; 
+    }
+    /* Hiệu ứng chỉ tay khi di chuột vào vùng có thể copy */
+    .text-copy-trigger {
+      cursor: pointer !important;
+      transition: opacity 0.15s;
+    }
+    .text-copy-trigger:hover {
+      opacity: 0.7; /* Hơi mờ nhẹ khi di chuột vào để người dùng biết có thể tương tác */
+    }
+        .badge-custom { padding: 3px 8px; font-size: 11px; font-weight: 700; border-radius: 4px; }
+    #loading, #no-result { text-align: center; padding: 15px; font-size: 13px; font-weight: 600; }
+    .btn-action-container { display: flex; width: 100%; gap: 8px; margin-top: 10px; border-top: 1px solid #edf2f7; padding-top: 8px; }
+    .btn-action-container button { flex: 1; padding: 6px; font-size: 12px; font-weight: bold; }
+    .search-group { display: flex; flex-direction: column; gap: 6px; }
+    .user-banner { font-size: 12px; font-weight: 600; color: #0d6efd; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }    
+    .history-container { margin-top: 2px; margin-bottom: 4px; }
+    .history-title { font-size: 11px; color: #718096; font-weight: bold; margin-bottom: 4px; display: block; }
+    .history-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .history-badge { background-color: #e2e8f0; color: #4a5568; font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 20px; cursor: pointer; transition: all 0.2s; border: 1px solid #cbd5e0; }
+    .history-badge:hover { background-color: #20c997; color: #ffffff; border-color: #20c997; }
+    
+    .search-input-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
+    .search-input-wrapper input { padding-right: 65px; }
+    .search-controls { position: absolute; right: 8px; display: flex; gap: 8px; align-items: center; }
+    .search-control-btn { border: none; background: none; color: #a0aec0; cursor: pointer; font-size: 16px; padding: 0; display: flex; align-items: center; justify-content: center; }
+    .search-control-btn:hover { color: #4a5568; }
+    .btn-voice-active { color: #dc3545 !important; animation: pulseVoice 1.2s infinite; }
+    
+    @keyframes pulseVoice {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+
+    .filter-tab-container { background-color: #f1f5f9 !important; border-color: #e2e8f0 !important; }
+    .filter-tab-btn { background: transparent; color: #64748b; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+    .filter-tab-btn.active { background: #ffffff !important; color: #0d6efd !important; shadow: 0 1px 3px rgba(0,0,0,0.1); box-shadow: 0 2px 4px rgba(0,0,0,0.06); }
+
+    .display-control-panel { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; background: #ffffff; padding: 6px 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
+    .btn-sort-toggle { border: none; background: none; color: #0d6efd; font-size: 12px; font-weight: bold; cursor: pointer; }
+
+    .cust-suggest-wrapper { position: relative; }
+    .cust-suggest-list { position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid #cbd5e0; border-top: none; border-radius: 0 0 6px 6px; max-height: 160px; overflow-y: auto; z-index: 1050; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; }
+    .cust-suggest-item { padding: 8px 12px; font-size: 12px; cursor: pointer; border-bottom: 1px solid #f0f4f8; font-weight: 500; }
+    .cust-suggest-item:last-child { border-bottom: none; }
+    .cust-suggest-item:hover { background-color: #e2e8f0; color: #0d6efd; }
+    
+    .load-more-container { text-align: center; margin: 15px 0 5px 0; }
+    .btn-load-more { font-size: 13px; font-weight: bold; padding: 8px 24px; border-radius: 20px; }
+/* CSS NÚT CHUYỂN XƯỞNG*/
+    .load-more-container { text-align: center; margin: 15px 0 5px 0; }
+    .btn-load-more { font-size: 13px; font-weight: bold; padding: 8px 24px; border-radius: 20px; }
+
+/* 2. ÉP PHẲNG VÀ CĂN ĐỀU TRỤC DỌC CHO HAI NÚT BẤM CHUYỂN XƯỞNG BL VÀ TH */
+    .btn-xuong {
+      font-size: 11px !important;
+      font-weight: 500 !important;
+      padding: 0px !important;
+      height: 20px !important;
+      line-height: 20px !important;
+      border-radius: 3px !important;
+      transition: all 0.2s ease;
+      border: none !important;
+      cursor: pointer;
+      min-width: 26px !important;
+      text-align: center;
+      display: inline-block !important;
+      /* THUỘC TÍNH QUYẾT ĐỊNH: Ép trục dọc về chính giữa dòng, chống nhô cao */
+      vertical-align: middle !important; 
+    }
+    
+    /* Khi chọn Bình Lục (BL): Nền cam đậm, chữ trắng */
+    .btn-xuong.active-bl {
+      background-color: #d35400 !important;
+      color: #ffffff !important;
+      border-color: #d35400 !important;
+      box-shadow: 0 2px 4px rgba(211, 84, 0, 0.3);
+    }
+    
+    /* Khi chọn Thái Hà (TH): Nền tím đậm, chữ trắng */
+    .btn-xuong.active-th {
+      background-color: #8e44ad !important;
+      color: #ffffff !important;
+      border-color: #8e44ad !important;
+      box-shadow: 0 2px 4px rgba(142, 68, 173, 0.3);
+    }
+    
+    /* Nút không được chọn: Làm mờ rõ rệt (opacity 0.25) */
+    .btn-xuong.inactive {
+      opacity: 0.25 !important;
+      background-color: #edf2f7 !important;
+      color: #a0aec0 !important;
+      border-color: #e2e8f0 !important;
+      box-shadow: none !important;
+    }
+    /* HẾT CSS NÚT CHUYỂN XƯỞNG*/
+    /* Nút cuộn về đầu trang */
+    .btn-back-to-top {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      background-color: #0d6efd;
+      color: #ffffff;
+      border: none;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+      z-index: 1060;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .btn-back-to-top.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    .btn-back-to-top:hover {
+      background-color: #0b5ed7;
+      transform: scale(1.1);
+    }
+    #dataList {
+      margin-bottom: 0px !important;
+      padding-bottom: 5px !important;
+    }
+    .load-more-container { 
+      margin: 10px 0 0px 0 !important; /* Thu gọn margin của khu vực nút xem thêm */
+    }
+ /* =============CSS cho 2 nút chuyển trang==============*/
+    .nav-tabs-container {
+      background-color: #f1f5f9 !important; /* Khay nền xám mịn dài tràn viền */
+      border: 1px solid #e2e8f0 !important; /* Đường viền mỏng bao quanh */
+      padding: 4px !important;              /* Khoảng cách đệm bên trong khay */
+      border-radius: 10px !important;
+      display: flex !important;             /* Trả về d-flex để thanh dài tràn viền 100% như cũ */
+      width: 100% !important;
+      gap: 4px;                             /* Khoảng cách giữa các nút */
+    }
+
+    .nav-tabs-container .btn {
+      background: transparent !important;
+      color: #64748b !important;            /* Chữ màu xám lịch lãm cho nút chưa chọn */
+      font-size: 12px;
+      font-weight: 700;
+      padding: 10px 12px !important;
+      border-radius: 8px !important;
+      border: none !important;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;                              /* Ép các nút tự chia đều không gian thanh dài */
+      position: relative;
+      z-index: 1;
+      /* Hiệu ứng chuyển động mượt mà khi đổi trạng thái chữ hoặc hover */
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Hiệu ứng HOVER: Khi di chuột hoặc chạm tay vào nút chưa chọn */
+    .nav-tabs-container .btn:hover {
+      color: #1a202c !important;
+      background-color: rgba(255, 255, 255, 0.4) !important;
+      transform: translateY(-1px); /* Nút hơi nhấc nhẹ lên 1px tạo cảm giác nổi khối sinh động */
+    }
+
+    /* TRẠNG THÁI ACTIVE: Nổi bật tab Kho Khuôn Bế đang mở */
+    .nav-tabs-container .nav-active-khuon {
+      background-color: #ffffff !important; /* Đổi sang nền trắng hẳn nổi bật */
+      color: #0d6efd !important;            /* Chữ xanh thương hiệu chính */
+      /* Hiệu ứng đổ bóng mờ mềm mại giúp nút active có chiều sâu tinh tế */
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04) !important;
+    }
+/* =============hết CSS cho 2 nút chuyển trang==============*/
+  </style>
+</head>
+<body>
+  <div class="app-container">    
+    <div id="checkingAuth" class="text-center text-secondary my-5">
+      <div class="spinner-border text-primary mb-2"></div>
+      <p class="fw-bold small">Đang kết nối kho dữ liệu HH Dream...</p>
+    </div>
+
+    <div id="loginForm" class="login-box d-none">
+      <h5 class="text-center text-primary fw-bold mb-3">HH DREAM LOGIN</h5>
+      <div class="mb-2">
+        <label class="form-label small fw-bold mb-1">Tên đăng nhập</label>
+        <input type="text" id="txtUser" class="form-control form-control-sm" placeholder="Nhập tài khoản...">
+      </div>
+      <div class="mb-3">
+        <label class="form-label small fw-bold mb-1">Mật khẩu</label>
+        <input type="password" id="txtPass" class="form-control form-control-sm" placeholder="******">
+      </div>
+      <button class="btn btn-primary btn-sm w-100 fw-bold py-2" onclick="thucHienDangNhap()">ĐĂNG NHẬP</button>
+    </div>
+
+<!-- bọc lại phần tiêu đề đứng im cố định -->
+<div id="mainApp" class="main-box d-none">
+      
+      <div class="sticky-header-panel">
+        
+        <div class="d-flex justify-content-between align-items-center mb-3 pb-2" style="border-bottom: 2px solid #0d6efd;">
+          <h1 class="m-0 text-primary fw-bold" style="font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px;">
+            <i class="bi bi-cpu-fill me-1"></i> Dữ Liệu Die-Mold
+          </h1>
+          <div class="d-flex align-items-center gap-2 bg-light px-2 py-1 rounded border shadow-sm">
+            <span class="text-dark small" style="font-size: 12px; font-weight: 500;">
+              <i class="bi bi-person-circle text-primary me-1"></i> <span id="lblNguoiDung">---</span>
+            </span>
+            <div style="width: 1px; height: 14px; background-color: #cbd5e0;"></div>
+            <button class="btn btn-xs btn-link p-0 text-danger fw-bold small text-decoration-none" style="font-size: 11px;" onclick="thucHienDangXuat()">
+              Đăng xuất <i class="bi bi-box-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="nav-tabs-container mb-3 rounded-3 border d-flex shadow-sm">
+          <a href="javascript:void(0)" 
+             onclick="window.top.location.href='https://script.google.com/macros/s/AKfycbx9XPzcFMaS_ukgqQ6JeaD_n9fRY_nacgkTODRjoPPtj6ltPUEy-vxWPUHDiYh7vAr6GA/exec?page=index&t=' + new Date().getTime(); return false;" 
+             class="btn nav-active-khuon">
+            <i class="fas fa-cubes me-2"></i> Khuôn Bế
+          </a>
+          <a href="javascript:void(0)" 
+             onclick="window.top.location.href='https://script.google.com/macros/s/AKfycbx9XPzcFMaS_ukgqQ6JeaD_n9fRY_nacgkTODRjoPPtj6ltPUEy-vxWPUHDiYh7vAr6GA/exec?page=foil&t=' + new Date().getTime(); return false;" 
+             class="btn">
+            <i class="fas fa-layer-group me-2"></i> Foil
+          </a>
+        </div>
+
+        <div class="row g-2 mb-2 align-items-center mx-0"> 
+          <div class="col-8 col-sm-9 px-0 pe-1"> 
+            <div class="input-group shadow-sm rounded-3 overflow-hidden border" style="height: 38px;">
+              <span class="input-group-text bg-white border-0 pe-1 text-muted">
+                <i class="bi bi-search" style="font-size: 13px;"></i>
+              </span>
+              <input type="text" id="txtSearch" autocomplete="off" class="form-control border-0 ps-2" 
+                     placeholder="Nhập mã khuôn, vị trí kệ..." 
+                     style="font-size: 13px; focus: none; box-shadow: none;"
+                     oninput="dinhDangViTriTuDong(this); xuLyGoiYTimKiem();">
+              <button id="btnClearSearch" class="btn bg-white border-0 text-muted px-1.5 d-none" type="button" onclick="clearThanhTimKiem()" title="Xóa chữ">
+                <i class="bi bi-x-circle-fill" style="font-size: 13px;"></i>
+              </button>
+              <button id="btnVoiceSearch" class="btn bg-white border-0 text-primary px-2.5" type="button" title="Tìm bằng giọng nói" onclick="kichHoatGiongNoi()">
+                <i class="bi bi-mic-fill" style="font-size: 14px;"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="col-4 col-sm-3 px-0 ps-1"> 
+            <button class="btn btn-success w-100 fw-bold border-0 shadow-sm rounded-3 d-flex align-items-center justify-content-center gap-1.5" 
+                    style="background: linear-gradient(135deg, #198754, #146c43); font-size: 12px; height: 38px; text-transform: uppercase; letter-spacing: 0.3px; transition: all 0.2s ease;"
+                    onclick="hienThiFormNhapMoi()">
+              <i class="bi bi-plus-circle-fill" style="font-size: 13px;"></i>
+              <span>Nhập mới</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="display-control-panel mb-2">
+          <div>
+            <span class="text-secondary small fw-bold">Hiển thị: <span id="lblCountInfo" class="text-dark">0/0</span> khuôn</span>
+          </div>
+          <div>
+            <button class="btn-sort-toggle" onclick="daoChieuSapXep()" title="Bấm để đảo thứ tự lớn/bé">
+              <i class="bi bi-arrow-down-up"></i> <span id="lblSortText">STT: 1 ➔ 9</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+      <div id="loading" class="d-none text-secondary text-center py-2">🔄 Đang tải dữ liệu từ bộ nhớ...</div>
+      <div id="no-result" class="d-none text-danger">⚠️ Mã này không có khuôn hủy</div>
+      
+      <div id="dataList"></div>
+      
+      <div id="loadMoreArea" class="load-more-container d-none">
+        <button class="btn btn-outline-primary btn-sm fw-bold btn-load-more" onclick="taiThemDuLieuRender()">Xem thêm</button>
+      </div>
+    </div>
+<!-- hết phần bọc-->
+
+
+    <div class="modal fade" id="modalNhapMoi" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-success text-white py-2">
+            <h6 class="modal-title fw-bold">NHẬP MỚI</h6>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-3">
+            <div class="mb-2">
+              <label class="form-label small fw-bold mb-0">Mã Khuôn (*)</label>
+              <input type="tel" id="addMaKhuon" class="form-control form-control-sm">
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-bold mb-0">Vị trí kệ lưu trữ (*)</label>
+              <input type="text" id="addViTri" class="form-control form-control-sm" style="text-transform: uppercase;" oninput="dinhDangViTriTuDong(this)">
+            </div>
+            <div class="mb-2 cust-suggest-wrapper">
+              <label class="form-label small fw-bold mb-0">Chọn Khách hàng (*)</label>             
+              <input type="text" id="addMaKhach" inputmode="numeric" pattern="[0-9]*" class="form-control form-control-sm" placeholder="Gõ mã hoặc tên khách để chọn..." oninput="goyYDanhSachKhachHang('add')">
+                          <div id="addCustSuggestList" class="cust-suggest-list"></div>
+              <input type="hidden" id="addKhachHang">
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-bold mb-0">Ghi chú</label>
+              <textarea id="addGhiChu" class="form-control form-control-sm" rows="2"></textarea>
+            </div>
+            <button class="btn btn-success btn-sm w-100 fw-bold mt-2" onclick="LuuKhuonMoi()">💾 XÁC NHẬN LƯU VÀO SHEETS</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="modalChinhSua" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-warning text-dark py-2">
+            <h6 class="modal-title fw-bold">✏️ CHỈNH SỬA THÔNG TIN KHUÔN BẾ</h6>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-3">
+            <input type="hidden" id="editStt">
+            <div class="mb-2">
+              <label class="form-label small fw-bold mb-0">Mã Khuôn (*)</label>
+              <input type="tel" id="editMaKhuon" class="form-control form-control-sm">
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-bold mb-0">Vị trí kệ lưu trữ (*)</label>
+              <input type="text" id="editViTri" class="form-control form-control-sm" style="text-transform: uppercase;" oninput="dinhDangViTriTuDong(this)">
+            </div>
+            <div class="mb-2 cust-suggest-wrapper">
+              <label class="form-label small fw-bold mb-0">Chọn Khách hàng (*)</label>
+              <input type="text" id="editMaKhach" inputmode="numeric" pattern="[0-9]*" class="form-control form-control-sm" placeholder="Gõ mã hoặc tên khách để chọn..." oninput="goyYDanhSachKhachHang('edit')">
+              <div id="editCustSuggestList" class="cust-suggest-list"></div>
+              <input type="hidden" id="editKhachHang">
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-bold mb-0">Ghi chú</label>
+              <textarea id="editGhiChu" class="form-control form-control-sm" rows="2"></textarea>
+            </div>
+            <button class="btn btn-warning btn-sm w-100 fw-bold mt-2" onclick="LuuChinhSuaKhuon()">💾 CẬP NHẬT THAY ĐỔI</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <button id="btnBackToTop" class="btn-back-to-top" onclick="cuonVeDauTrang()" title="Lên đầu trang">
+    <i class="bi bi-arrow-up-short"></i>
+  </button>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <script>
+    var TEN_USER_HIEN_TAI = "";
+    var modalNhapMoiObj, modalChinhSuaObj;
+    
+    var MANG_BO_NHO_KHO = []; 
+    var KET_QUA_DANG_HIEN_THI = []; 
+    var DANH_SACH_KHACH_HANG_BO_NHO = []; 
+    var TRANG_THAI_LOC_HIEN_TAI = "tat_ca"; 
+    
+    var SO_DONG_MOI_TRANG = 30;    // số trang hiển thị trước
+    var SO_DONG_DANG_RENDER = 30; // số trang hiển thị trước
+    
+    var SAP_XEP_MOI_NHAT = true;
+    var deBounceTimer;
+
+ const Toast = Swal.mixin({
+      toast: true,
+      position: 'top',             // Giữ vị trí ở giữa phía trên màn hình điện thoại
+      showConfirmButton: false,
+      timer: 2000,                 // 1 giây tự tắt nhanh gọn
+      timerProgressBar: true,     // Không hiện thanh chạy thời gian rườm rà
+      width: 'max-content',        // Ép khung thông báo luôn co giãn vừa khít theo chiều dài của chữ
+      customClass: {
+        // bg-light: nền màu sáng nhạt, text-dark: chữ màu tối, border: tạo viền nhẹ cho sang nhạt như cũ
+        popup: 'p-2 px-3 fw-bold small text-dark bg-light border shadow-sm' 
+      },
+      didOpen: (toast) => {
+        // Ép trình duyệt không được phép tự động ngắt dòng chữ (luôn hiển thị trên 1 dòng)
+        toast.style.whiteSpace = 'nowrap'; 
+      }
+    });
+    
+    
+      window.addEventListener('load', function() {
+      modalNhapMoiObj = new bootstrap.Modal(document.getElementById('modalNhapMoi'));
+      modalChinhSuaObj = new bootstrap.Modal(document.getElementById('modalChinhSua'));
+      kiemTraGhiNhoDangNhap();
+      //hienThiDanhSachXemGanDay(); // ĐOẠN CŨ NÀY CẦN XÓA BỎ
+      taiDanhSachKhachHangHeThong(); 
+      
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.cust-suggest-wrapper')) {
+          document.querySelectorAll('.cust-suggest-list').forEach(el => el.style.display = 'none');
+        }
+      });
+    });
+// --- TỰ ĐỘNG LƯU FORM NHẬP MỚI ---
+function luuTamFormNhapMoi() {
+  var data = {
+    maKhuon: document.getElementById("addMaKhuon").value,
+    viTri: document.getElementById("addViTri").value,
+    maKhach: document.getElementById("addMaKhach").value,
+    khachHang: document.getElementById("addKhachHang").value,
+    ghiChu: document.getElementById("addGhiChu").value
+  };
+  localStorage.setItem("hh_dream_draft_new", JSON.stringify(data));
+}
+
+    // tự động thêm gạch ngang
+function dinhDangViTriTuDong(inputElement) {
+  // 1. Lưu lại vị trí con trỏ trước khi xử lý
+  let viTriConTro = inputElement.selectionStart;
+  let val = inputElement.value;
+  
+  if (!val) return;
+  
+  // 2. Kiểm tra nếu ký tự đầu tiên là CHỮ CÁI mới xử lý vị trí kệ
+  let kyTuDauLaChu = /^[a-zA-Z]/.test(val);
+  
+  if (kyTuDauLaChu) {
+    // Lưu lại chiều dài chuỗi trước khi chèn dấu để so sánh
+    let doDaiTruoc = val.length;
+    
+    // Xóa dấu gạch cũ, khoảng trắng thừa VÀ chuyển tất cả thành chữ HOA (Caps Lock tự động)
+    let rawVal = val.replace(/[- \s]/g, "").toUpperCase(); 
+    
+    if (rawVal.length >= 3) {
+      inputElement.value = rawVal.substring(0, 2) + "-" + rawVal.substring(2);
+    } else {
+      inputElement.value = rawVal;
+    }
+    
+    // 3. Tính toán lại vị trí con trỏ thực tế
+    let doDaiSau = inputElement.value.length;
+    
+    // Nếu chiều dài chuỗi tăng lên (do chèn thêm dấu '-') thì dịch con trỏ lên 1 bước
+    if (doDaiSau > doDaiTruoc) {
+      viTriConTro++;
+    }
+    
+    // Đặt con trỏ vào đúng vị trí chính xác để gõ tiếp liên tục
+    inputElement.setSelectionRange(viTriConTro, viTriConTro);
+  }
+}
+//==============
+// Lắng nghe tất cả sự kiện nhập liệu trên form nhập mới
+document.getElementById("modalNhapMoi").addEventListener("input", luuTamFormNhapMoi);
+
+// --- TỰ ĐỘNG LƯU FORM CHỈNH SỬA ---
+function luuTamFormChinhSua() {
+  var data = {
+    stt: document.getElementById("editStt").value,
+    maKhuon: document.getElementById("editMaKhuon").value,
+    viTri: document.getElementById("editViTri").value,
+    maKhach: document.getElementById("editMaKhach").value,
+    khachHang: document.getElementById("editKhachHang").value,
+    ghiChu: document.getElementById("editGhiChu").value
+  };
+  localStorage.setItem("hh_dream_draft_edit", JSON.stringify(data));
+}
+
+document.getElementById("modalChinhSua").addEventListener("input", luuTamFormChinhSua);
+    function kiemTraGhiNhoDangNhap() {
+      var savedUser = localStorage.getItem("hh_dream_user");
+      var savedTime = localStorage.getItem("hh_dream_login_time");
+      var now = new Date().getTime();
+      
+      if (savedUser && savedTime && (now - savedTime < 86400000)) {
+        TEN_USER_HIEN_TAI = savedUser;
+        document.getElementById("lblNguoiDung").innerText = TEN_USER_HIEN_TAI;
+        document.getElementById("checkingAuth").classList.add("d-none");
+        document.getElementById("mainApp").classList.remove("d-none");
+        taiDuLieuKhuonTuSheets(); 
+      } else {
+        localStorage.removeItem("hh_dream_user");
+        localStorage.removeItem("hh_dream_login_time");
+        document.getElementById("checkingAuth").classList.add("d-none");
+        document.getElementById("loginForm").classList.remove("d-none");
+      }
+    }
+
+function taiDuLieuKhuonTuSheets() {
+      var khungLoading = document.getElementById("loading");
+      if (khungLoading) khungLoading.classList.remove("d-none");
+
+      // === ĐOẠN ĐỌC CACHE SIÊU TỐC HÀNG ĐẦU ===
+      var duLieuCacheSan = localStorage.getItem("hh_dream_cache_kho_khuon");
+      if (duLieuCacheSan) {
+        MANG_BO_NHO_KHO = JSON.parse(duLieuCacheSan);
+        // Hiển thị ngay lập tức danh sách ra màn hình (mất 0.1 giây)
+        thucHienLocVaHienThiGiaoDien(document.getElementById("txtSearch").value || "");
+        if (khungLoading) khungLoading.classList.add("d-none");
+      }
+      // =======================================
+
+      // Vẫn chạy ngầm lệnh quét Sheets của Google để cập nhật bản mới nhất nếu có người khác sửa
+      google.script.run.withSuccessHandler(function(data) {
+        google.script.run.withSuccessHandler(function(deletedData) {
+          if (khungLoading) khungLoading.classList.add("d-none");
+          
+          var gopDuLieu = [];
+          if(data && data.length > 0) { gopDuLieu = gopDuLieu.concat(data); }
+          
+          if(deletedData && deletedData.length > 0) {
+            var dinhDangXoa = deletedData.map(function(item) {
+              return {
+                sttHieuChinh: -999999, 
+                ngayNhap: item.ngayNhap || "---",
+                maKhuon: item.maKhuon ? item.maKhuon.toString().trim() : "",
+                viTri: item.viTri ? item.viTri.toString().trim() : "---",
+                maKhach: item.maKhach ? item.maKhach.toString().trim() : "---",
+                khachHang: item.khachHang ? item.khachHang.toString().trim() : "---",
+                xuong: item.xuong ? item.xuong.toString().trim().toUpperCase() : "", 
+                huyKhuon: "đã xóa",
+                ngayHuy: item.ngayHuy || "---",
+                ghiChu: item.ghiChu || "---",
+                nguoiNhap: item.nguoiNhap || "Hệ thống"
+              };
+            });
+            gopDuLieu = gopDuLieu.concat(dinhDangXoa);
+          }
+          
+          // Kiểm tra xem dữ liệu từ Sheets về có gì mới so với Cache cũ không
+          var chuoiMoi = JSON.stringify(gopDuLieu);
+          if (chuoiMoi !== duLieuCacheSan) {
+            MANG_BO_NHO_KHO = gopDuLieu;
+            // Ghi đè cục bộ bản mới nhất vào Cache trình duyệt để lần sau nạp nhanh
+            localStorage.setItem("hh_dream_cache_kho_khuon", chuoiMoi);
+            thucHienLocVaHienThiGiaoDien(document.getElementById("txtSearch").value || ""); 
+          }
+        }).taiToanBoKhoKhuonXoa();
+      }).taiToanBoKhoKhuon();
+    }
+
+    function taiDanhSachKhachHangHeThong() {
+      google.script.run.withSuccessHandler(function(data) {
+        if (data && data.length > 0) {
+          DANH_SACH_KHACH_HANG_BO_NHO = data; 
+        }
+      }).taiDanhSachKhachHang(); 
+    }
+
+    function goyYDanhSachKhachHang(prefix) {
+      var inputVal = document.getElementById(prefix + "MaKhach").value.toLowerCase().trim();
+      var suggestBox = document.getElementById(prefix + "CustSuggestList");
+      suggestBox.innerHTML = "";
+      
+      if (inputVal === "") {
+        suggestBox.style.display = "none";
+        document.getElementById(prefix + "KhachHang").value = "";
+        return;
+      }
+      
+      var resultLoc = DANH_SACH_KHACH_HANG_BO_NHO.filter(function(c) {
+        return c.maKhach.toLowerCase().indexOf(inputVal) !== -1 || c.tenKhach.toLowerCase().indexOf(inputVal) !== -1;
+      });
+      
+      if (resultLoc.length === 0) {
+        suggestBox.style.display = "none";
+        return;
+      }
+      
+      suggestBox.style.display = "block";
+      resultLoc.slice(0, 8).forEach(function(cust) {
+        var item = document.createElement("div");
+        item.className = "cust-suggest-item";
+        item.innerText = cust.maKhach + " — " + cust.tenKhach;
+        item.onclick = function() {
+          document.getElementById(prefix + "MaKhach").value = cust.maKhach;
+          document.getElementById(prefix + "KhachHang").value = cust.tenKhach; 
+          suggestBox.style.display = "none";
+        };
+        suggestBox.appendChild(item);
+      });
+    }
+
+    function chuyenBoLoc(loaiLoc) {
+  TRANG_THAI_LOC_HIEN_TAI = loaiLoc;
+  
+  // Đặt lá chắn bảo mật: Chỉ đổi màu nút nếu nút đó thực sự tồn tại trên giao diện
+  var btnAll = document.getElementById("filterAll");
+  var btnActive = document.getElementById("filterActive");
+  var btnScraped = document.getElementById("filterScraped");
+  
+  if (btnAll && btnActive && btnScraped) {
+    document.querySelectorAll(".filter-tab-btn").forEach(btn => btn.classList.remove("active"));
+    if(loaiLoc === 'tat_ca') btnAll.classList.add("active");
+    if(loaiLoc === 'dang_dung') btnActive.classList.add("active");
+    if(loaiLoc === 'da_huy') btnScraped.classList.add("active");
+  }
+  
+  var tuKhoa = document.getElementById("txtSearch").value;
+  thucHienLocVaHienThiGiaoDien(tuKhoa);
+}
+
+    function daoChieuSapXep() {
+      SAP_XEP_MOI_NHAT = !SAP_XEP_MOI_NHAT;
+      // Đổi chữ hiển thị để người dùng biết đang xếp xuôi hay xếp ngược
+      document.getElementById("lblSortText").innerText = SAP_XEP_MOI_NHAT ? "STT: 1 ➔ 9" : "STT: 9 ➔ 1";
+      
+      var tuKhoa = document.getElementById("txtSearch").value;
+      thucHienLocVaHienThiGiaoDien(tuKhoa);
+    }
+
+    function xuLyGoiYTimKiem() {
+      var val = document.getElementById("txtSearch").value;
+      var btnClear = document.getElementById("btnClearSearch");
+      
+      if(val.trim() !== "") {
+        btnClear.classList.remove("d-none");
+      } else {
+        btnClear.classList.add("d-none");
+      }
+      
+      clearTimeout(deBounceTimer);
+      deBounceTimer = setTimeout(function() {
+        thucHienLocVaHienThiGiaoDien(val);
+      }, 200); 
+    }
+
+    function clearThanhTimKiem() {
+      document.getElementById("txtSearch").value = "";
+      document.getElementById("btnClearSearch").classList.add("d-none");
+      thucHienLocVaHienThiGiaoDien("");
+    }
+
+    function kichHoatGiongNoi() {
+      var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        Toast.fire({ icon: 'error', title: 'Không hỗ trợ', text: 'Trình duyệt này không hỗ trợ tìm kiếm bằng giọng nói!', confirmButtonColor: '#dc3545' });
+        return;
+      }
+      
+      var recognition = new SpeechRecognition();
+      recognition.lang = 'vi-VN';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      
+      var micBtn = document.getElementById("btnVoiceSearch");
+      micBtn.classList.add("btn-voice-active");
+      
+      recognition.start();
+      
+      recognition.onresult = function(event) {
+        var speechResult = event.results[0][0].transcript;
+        if(speechResult.endsWith('.')) { speechResult = speechResult.slice(0, -1); }
+        
+        document.getElementById("txtSearch").value = speechResult;
+        document.getElementById("btnClearSearch").classList.remove("d-none");
+        thucHienLocVaHienThiGiaoDien(speechResult);
+      };
+      
+      recognition.onspeechend = function() {
+        recognition.stop();
+        micBtn.classList.remove("btn-voice-active");
+      };
+      
+      recognition.onerror = function(event) {
+        micBtn.classList.remove("btn-voice-active");
+        console.log("Lỗi nhận diện giọng nói: " + event.error);
+      };
+    }
+
+ function saoChepNhanhVanBan(text, label, event) {
+      if(event) event.stopPropagation(); 
+      
+      var thucHienCopy = function() {
+        // Gọi Toast kiểu mới: Không truyền thuộc tính icon, chỉ truyền tiêu đề ngắn gọn
+        Toast.fire({ title: '📋 Đã copy: ' + text });
+      };
+
+      navigator.clipboard.writeText(text).then(function() {
+        thucHienCopy();
+      }, function() {
+        var input = document.createElement('input');
+        input.setAttribute('value', text);
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        thucHienCopy();
+      });
+    }
+
+    function thucHienBatTatThongTin(sttDong, maKhuonKhuon) {
+  var element = document.getElementById("body-content-" + sttDong);
+  var icon = document.getElementById("arrow-icon-" + sttDong);
+  
+  // Kiểm tra xem thẻ này trước khi bấm đang đóng hay đang mở
+  var dangMo = (element.style.display === "block");
+  
+  // Bước 1: Đóng tất cả các thẻ khác lại trước để màn hình gọn gàng
+  document.querySelectorAll(".card-body-content").forEach(el => el.style.display = "none");
+  document.querySelectorAll(".card-header-toggle i").forEach(ic => ic.className = "bi bi-chevron-down");
+  
+  // Bước 2: Nếu thẻ vừa bấm trước đó đang đóng, thì bây giờ mở nó ra
+  if (!dangMo) {
+    element.style.display = "block";
+    icon.className = "bi bi-chevron-up";
+    
+    // Lưu vào lịch sử khuôn đã xem gần đây
+    if(maKhuonKhuon) {
+      luuKhuonDaXem(maKhuonKhuon);
+    }
+  }
+  // Ngược lại, nếu nó đang mở sẵn rồi thì thôi (bước 1 đã tự động đóng nó lại)
+}
+
+    function luuKhuonDaXem(maKhuon) {
+      if(!maKhuon || maKhuon.trim() === "") return;
+      maKhuon = maKhuon.trim();
+      
+      var views = JSON.parse(localStorage.getItem("hh_dream_view_history")) || [];
+      views = views.filter(function(item) { return item.toLowerCase() !== maKhuon.toLowerCase(); });
+      views.unshift(maKhuon);
+      
+      if(views.length > 10) { views = views.slice(0, 10); }
+      
+      localStorage.setItem("hh_dream_view_history", JSON.stringify(views));
+      hienThiDanhSachXemGanDay();
+    }
+
+    function hienThiDanhSachXemGanDay() {
+      var views = JSON.parse(localStorage.getItem("hh_dream_view_history")) || [];
+      var container = document.getElementById("recentViewsTags");
+      container.innerHTML = "";
+      
+      if(views.length === 0) {
+        container.innerHTML = '<span class="text-muted" style="font-size:11px; font-style:italic;">Chưa xem khuôn nào</span>';
+        return;
+      }
+      
+      views.forEach(function(maKhuon) {
+        var badge = document.createElement("span");
+        badge.className = "history-badge";
+        badge.innerHTML = '' + maKhuon;
+        badge.onclick = function() {
+          document.getElementById("txtSearch").value = maKhuon;
+          document.getElementById("btnClearSearch").classList.remove("d-none");
+          thucHienLocVaHienThiGiaoDien(maKhuon); 
+        };
+        container.appendChild(badge);
+      });
+    }
+
+function thucHienLocVaHienThiGiaoDien(tuKhoa) {
+      SO_DONG_DANG_RENDER = SO_DONG_MOI_TRANG;
+      var searchStr = tuKhoa ? tuKhoa.toString().toLowerCase().trim() : "";
+      
+      // Tạo một bản sao sâu độc lập từ mảng bộ nhớ gốc để tránh lỗi loạn chỉ mục index khi F5
+      var mangSaoChepAnToan = JSON.parse(JSON.stringify(MANG_BO_NHO_KHO || []));
+      
+      var coDinhTheoTuKhoa = mangSaoChepAnToan.filter(function(item) {
+        return searchStr === "" || 
+               (item.maKhuon && item.maKhuon.toLowerCase().indexOf(searchStr) !== -1) || 
+               (item.viTri && item.viTri.toLowerCase().indexOf(searchStr) !== -1) || 
+               (item.khachHang && item.khachHang.toLowerCase().indexOf(searchStr) !== -1);
+      });
+      
+      var countTatCa = coDinhTheoTuKhoa.length;
+      var countDangDung = coDinhTheoTuKhoa.filter(item => item.huyKhuon.toLowerCase() !== "đã hủy" && item.huyKhuon.toLowerCase() !== "đã xóa").length;
+      var countDaHuy = countTatCa - countDangDung;
+
+      //document.getElementById("filterAll").innerText = "Tất cả (" + countTatCa + ")";
+      //document.getElementById("filterActive").innerText = "Đang dùng (" + countDangDung + ")";
+      //document.getElementById("filterScraped").innerText = "Đã hủy (" + countDaHuy + ")";
+
+      var ketQuaLoc = coDinhTheoTuKhoa;
+      if (TRANG_THAI_LOC_HIEN_TAI === "dang_dung") {
+        ketQuaLoc = ketQuaLoc.filter(item => item.huyKhuon.toLowerCase() !== "đã hủy" && item.huyKhuon.toLowerCase() !== "đã xóa");
+      } else if (TRANG_THAI_LOC_HIEN_TAI === "da_huy") {
+        ketQuaLoc = ketQuaLoc.filter(item => item.huyKhuon.toLowerCase() === "đã hủy" || item.huyKhuon.toLowerCase() === "đã xóa");
+      }
+      
+      // Sắp xếp an toàn trên mảng đã được sao chép
+     // Sắp xếp an toàn theo MÃ KHUÔN (Chuẩn năm-tháng-số thứ tự)
+      ketQuaLoc.sort(function(a, b) {
+        // Chuyển mã khuôn về dạng chuỗi text sạch, nếu không có thì gán chuỗi rỗng
+        var maA = a.maKhuon ? a.maKhuon.toString().trim() : "";
+        var maB = b.maKhuon ? b.maKhuon.toString().trim() : "";
+        
+        // Nếu là khuôn đã xóa vĩnh viễn (-999999), ta ép nó xuống dưới cùng đáy kho bằng cách đẩy giá trị mã của nó về sau
+        if (a.sttHieuChinh === -999999 && b.sttHieuChinh !== -999999) return 1;
+        if (b.sttHieuChinh === -999999 && a.sttHieuChinh !== -999999) return -1;
+        
+        // SAP_XEP_MOI_NHAT lúc này đóng vai trò là trạng thái hiển thị tăng dần hoặc giảm dần theo mã
+        if (SAP_XEP_MOI_NHAT) {
+          // Xếp xuôi: Mã nhỏ đứng trước, mã lớn đứng sau (Ví dụ: từ 2605001 ➔ 2605099)
+          return maA.localeCompare(maB, undefined, { numeric: true, sensitivity: 'base' });
+        } else {
+          // Xếp ngược: Mã lớn đứng trước, mã nhỏ đứng sau (Ví dụ: từ 2605099 ➔ 2605001)
+          return maB.localeCompare(maA, undefined, { numeric: true, sensitivity: 'base' });
+        }
+      });
+      
+      KET_QUA_DANG_HIEN_THI = ketQuaLoc;
+      renderDuLieuGiaoDien();
+    }
+//SỬA MỚI Ở ĐÂY
+function renderDuLieuGiaoDien() {
+      // ÉP TẮT MÀN HÌNH XOAY TRÒN NGAY KHI CÓ DỮ LIỆU ĐỂ TRÁNH BỊ TREO DO LỖI CACHE
+      var checkingAuthBox = document.getElementById("checkingAuth");
+      if (checkingAuthBox) { checkingAuthBox.classList.add("d-none"); }
+
+      // === DÁN CHÈN THÊM ĐOẠN NÀY VÀO ĐỂ ÉP ĐỔI CHỮ UNDEFINED THÀNH TÊN NGƯỜI DÙNG ===
+      var savedUser = localStorage.getItem("hh_dream_user") || "Công nhân";
+      var lblUser = document.getElementById("lblNguoiDung");
+      if (lblUser) { lblUser.innerText = savedUser; }
+      // ==============================================================================
+
+      var container = document.getElementById("dataList");
+      var noRes = document.getElementById("no-result");
+
+      var loadMoreBtn = document.getElementById("loadMoreArea");
+      
+      container.innerHTML = "";
+      noRes.classList.add("d-none");
+      loadMoreBtn.classList.add("d-none");
+      
+      if (KET_QUA_DANG_HIEN_THI.length === 0) {
+        noRes.classList.remove("d-none");
+        document.getElementById("lblCountInfo").innerText = "0/0";
+        return;
+      }
+      
+      var dataHienThi = KET_QUA_DANG_HIEN_THI.slice(0, SO_DONG_DANG_RENDER);
+      document.getElementById("lblCountInfo").innerText = dataHienThi.length + "/" + KET_QUA_DANG_HIEN_THI.length;
+      
+      if (KET_QUA_DANG_HIEN_THI.length > dataHienThi.length) {
+        loadMoreBtn.classList.remove("d-none");
+      }
+      
+      dataHienThi.forEach(function(item) {
+        var isHuy = (item.huyKhuon.toLowerCase() === "đã hủy");
+        var isXoa = (item.huyKhuon.toLowerCase() === "đã xóa");
+        
+        var card = document.createElement("div");
+        if (isXoa) {
+          card.className = "card-row is-deleted";
+        } else if (isHuy) {
+          card.className = "card-row is-scraped";
+        } else {
+          card.className = "card-row";
+        }
+        
+        // --- XỬ LÝ ĐỔ MÀU CSS CHUẨN XÁC THEO TRẠNG THÁI XƯỞNG ---
+        var classBL = "btn-xuong";
+        var classTH = "btn-xuong";
+        
+        var trangThaiXuong = item.xuong ? item.xuong.toString().trim().toUpperCase() : "";
+
+        if (trangThaiXuong === "BL") {
+          classBL += " active-bl";
+          classTH += " inactive"; 
+        } else if (trangThaiXuong === "TH") {
+          classTH += " active-th";
+          classBL += " inactive"; 
+        }
+        
+// ĐOẠN ĐÚNG SAU KHI ĐÃ ĐƯỢC LÀM SẠCH CHỮ ĐẬM:
+var html = '<div class="card-header-toggle" onclick="thucHienBatTatThongTin(' + item.sttHieuChinh + ', \'' + item.maKhuon + '\')">' +
+  '<div class="card-header-title">' +
+    
+    // Cột 1: Mã khuôn (Xóa bỏ hoàn toàn class fw-bold hoặc text-primary đậm nếu có)
+    '<span class="text-primary text-copy-trigger col-ma-khuon" onclick="saoChepNhanhVanBan(\'' + item.maKhuon + '\', \'Mã khuôn\', event)" title="Bấm để copy mã khuôn">' + item.maKhuon + '</span>' +
+    
+    // Dấu gạch ngang phân cách mỏng
+    '<span class="col-phay">—</span>' +
+    
+    // Cột 2: Vị trí kệ
+    '<span class="col-vi-tri">' +
+      '<span class="vi-tri-ke-style text-copy-trigger w-100 px-0" onclick="saoChepNhanhVanBan(\'' + item.viTri + '\', \'Vị trí kệ\', event)" title="Bấm để copy vị trí kệ">' + item.viTri.toUpperCase() + '</span>' +
+    '</span>' +
+            
+            // Cột 3: Cụm nút xưởng BL & TH (Cố định chiều rộng)
+            '<span class="col-cum-xuong">' +
+              '<button class="' + classBL + '" onclick="chuyenXuongKhuon(' + item.sttHieuChinh + ', \'BL\', event)">BL</button>' +
+              '<button class="' + classTH + '" onclick="chuyenXuongKhuon(' + item.sttHieuChinh + ', \'TH\', event)">TH</button>' +
+            '</span>' +
+            
+          '</div>' +
+          
+          // Cột cuối cùng bên phải: Badge trạng thái và mũi tên đóng mở (Nằm gọn gàng duy nhất tại đây)
+          '<div class="d-flex align-items-center">' +
+            (isXoa ? '<span class="badge bg-secondary me-2" style="font-size:10px;">XÓA</span>' : 
+             isHuy ? '<span class="badge bg-danger me-2" style="font-size:10px;">HỦY</span>' : 
+                     '<span class="badge bg-success me-2" style="font-size:10px;">DÙNG</span>') +
+            '<i id="arrow-icon-' + item.sttHieuChinh + '" class="bi bi-chevron-down"></i>' +
+          '</div>' +
+        '</div>';
+        
+        html += '<div id="body-content-' + item.sttHieuChinh + '" class="card-body-content">' +
+          '<div class="info-grid">' +
+            '<div class="info-item"><div class="info-lbl">Ngày nhập:</div><div class="info-val">' + item.ngayNhap + '</div></div>' +
+            '<div class="info-item"><div class="info-lbl">Mã khách:</div><div class="info-val">' + item.maKhach + '</div></div>' +
+            '<div class="info-item"><div class="info-lbl">Khách hàng:</div><div class="info-val">' + item.khachHang + '</div></div>' +
+            '<div class="info-item"><div class="info-lbl">Trạng thái:</div><div>';
+            
+        if (isXoa) {
+          html += '<span class="badge-custom bg-secondary text-white">ĐÃ XÓA</span>';
+        } else if (isHuy) {
+          html += '<span class="badge-custom bg-danger text-white">ĐÃ HỦY</span>';
+        } else {
+          html += '<span class="badge-custom bg-success text-white">ĐANG DÙNG</span>';
+        }
+        
+        html += '</div></div>';
+            
+        if(isHuy || isXoa) { html += '<div class="info-item"><div class="info-lbl">Ngày hủy/xóa:</div><div class="info-val text-danger">' + item.ngayHuy + '</div></div>'; }
+        
+        html += '<div class="info-item"><div class="info-lbl">Ghi chú:</div><div class="info-val text-secondary">' + item.ghiChu + '</div></div>' +
+          '<div class="info-item"><div class="info-lbl">Người cập nhật:</div><div class="info-val text-dark">👤 ' + item.nguoiNhap + '</div></div>' +
+          '</div>';
+            
+        html += '<div class="btn-action-container">';
+        if(!isHuy && !isXoa) {
+          html += '<button class="btn btn-warning text-dark btn-sm" onclick="moFormChinhSua(' + item.sttHieuChinh + ')">✏️ SỬA KHUÔN</button>' +
+                  '<button class="btn btn-outline-danger btn-sm" onclick="YeuCauHuyKhuon(' + item.sttHieuChinh + ')">🗑️ BÁO HỦY</button>';
+        } else {
+          if(isXoa || item.sttHieuChinh === -999999) {
+            html += '<button class="btn btn-secondary btn-sm w-100" disabled>🔒 KHUÔN ĐÃ BỊ XÓA LƯU TRỮ</button>';
+          } else {
+            html += '<button class="btn btn-outline-success btn-sm" style="flex:1;" onclick="YeuCauKhoiPhucKhuon(' + item.sttHieuChinh + ')">🔄 KHÔI PHỤC</button>' +
+                    '<button class="btn btn-danger btn-sm" style="flex:1;" onclick="YeuCauXoaKhuonHienTai(' + item.sttHieuChinh + ')">❌ XÓA VĨNH VIỄN</button>';
+          }
+        }
+        html += '</div>';
+        html += '</div>';
+        
+        card.innerHTML = html;
+        container.appendChild(card);
+      });
+    }
+// CHO TỚI ĐÂY
+    function taiThemDuLieuRender() {
+      SO_DONG_DANG_RENDER += SO_DONG_MOI_TRANG;
+      renderDuLieuGiaoDien();
+    }
+
+    function thucHienDangNhap() {
+      var u = document.getElementById("txtUser").value;
+      var p = document.getElementById("txtPass").value;
+      if(!u || !p) { 
+        Toast.fire({ icon: 'warning', title: 'Tên mày là gì', text: 'điền đủ tên tuổi vào!', confirmButtonColor: '#0d6efd' });
+        return; 
+      }
+      
+      Swal.fire({
+        title: 'Đang check...',
+        text: 'chờ tí',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+      });
+      
+      google.script.run.withSuccessHandler(function(res) {
+        Swal.close(); 
+        if(res.thanhCong) {
+          TEN_USER_HIEN_TAI = res.user;
+          localStorage.setItem("hh_dream_user", res.user);
+          localStorage.setItem("hh_dream_login_time", new Date().getTime());
+          
+          document.getElementById("lblNguoiDung").innerText = res.user;
+          document.getElementById("loginForm").classList.add("d-none");
+          document.getElementById("mainApp").classList.remove("d-none");
+          taiDuLieuKhuonTuSheets();
+          
+          Toast.fire({ icon: 'success', title: 'Ngon luôn!' });
+        } else {
+          Toast.fire({ icon: 'error', title: 'Lỗi đăng nhập', text: res.tinNhan, confirmButtonColor: '#dc3545' });
+        }
+      }).xuLyDangNhap(u, p);
+    }
+
+    function thucHienDangXuat() {
+  Swal.fire({
+    title: 'Mày muốn thoát ư?',
+    text: "Mày sẽ phải đăng nhập lại vào lần sau.",
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#0d6efd',
+    cancelButtonColor: '#6c757d',
+    confirmButtonText: 'Đăng xuất',
+    cancelButtonText: 'Hủy'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // 1. Xóa thông tin đăng nhập trong bộ nhớ trình duyệt
+      localStorage.removeItem("hh_dream_user");
+      localStorage.removeItem("hh_dream_login_time");
+      
+      // 2. Reset các trường nhập liệu trong Form đăng nhập về trống
+      document.getElementById("txtUser").value = "";
+      document.getElementById("txtPass").value = "";
+      
+      // 3. Chuyển đổi trạng thái hiển thị màn hình ngay lập tức
+      document.getElementById("mainApp").classList.add("d-none");
+      document.getElementById("loginForm").classList.remove("d-none");
+      
+      // 4. (Tùy chọn) Reset các dữ liệu tạm thời để bảo mật dữ liệu cũ
+      MANG_BO_NHO_KHO = [];
+      KET_QUA_DANG_HIEN_THI = [];
+      document.getElementById("dataList").innerHTML = "";
+    }
+  });
+}
+
+    function hienThiFormNhapMoi() {
+      document.getElementById("addMaKhuon").value = "";
+      document.getElementById("addViTri").value = "";
+      document.getElementById("addMaKhach").value = "";
+      document.getElementById("addKhachHang").value = "";
+      document.getElementById("addGhiChu").value = "";
+      document.getElementById("addCustSuggestList").style.display = "none";
+      modalNhapMoiObj.show();
+    }
+
+    function LuuKhuonMoi() {
+      var mk = document.getElementById("addMaKhuon").value.trim();
+      var vt = document.getElementById("addViTri").value.trim();
+      var mkh = document.getElementById("addMaKhach").value.trim();
+      var kh = document.getElementById("addKhachHang").value.trim();
+      var gc = document.getElementById("addGhiChu").value.trim();
+      
+      if (mkh !== "" && kh === "") {
+        var timKhach = DANH_SACH_KHACH_HANG_BO_NHO.find(x => x.maKhach.toLowerCase() === mkh.toLowerCase());
+        if (timKhach) kh = timKhach.tenKhach;
+      }
+
+        if(!mk || !vt || !mkh) { 
+      Swal.fire({ 
+        icon: 'warning', 
+        title: 'Cái Disss', 
+        text: 'Đã nhập cái đé gì đâu mà lưu!', 
+        showConfirmButton: false, // Ẩn nút OK
+        timer: 2000               // Tự động tắt sau 2 giây
+      });
+      return; 
+    }
+      
+      if(!kh) {
+        Toast.fire({ icon: 'error', title: 'Sai mã khách', text: 'Mã khách hàng này đé tồn tại!', confirmButtonColor: '#dc3545' });
+        return;
+      }
+
+      Swal.fire({ title: 'Chờ tí...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+      
+      google.script.run.withSuccessHandler(function(res) {
+        Swal.close();
+        if(res.thanhCong) { 
+  modalNhapMoiObj.hide(); 
+  Toast.fire({ icon: 'success', title: res.tinNhan }); // Sử dụng Toast tự tắt
+  taiDuLieuKhuonTuSheets(); 
+} else { 
+          Toast.fire({ icon: 'error', title: 'CCC', text: res.tinNhan, confirmButtonColor: '#dc3545' });
+        }
+      }).nhapKhuonMoi({maKhuon: mk, viTri: vt.toUpperCase(), maKhach: mkh, khachHang: kh, ghiChu: gc, nguoiThucHien: TEN_USER_HIEN_TAI});
+    }
+
+    function moFormChinhSua(dongCanSua) {
+      var item = MANG_BO_NHO_KHO.find(x => x.sttHieuChinh === dongCanSua);
+      if(!item) return;
+      document.getElementById("editStt").value = item.sttHieuChinh;
+      document.getElementById("editMaKhuon").value = item.maKhuon;
+      document.getElementById("editViTri").value = item.viTri.toUpperCase();
+      document.getElementById("editMaKhach").value = item.maKhach;
+      document.getElementById("editKhachHang").value = item.khachHang;
+      document.getElementById("editGhiChu").value = item.ghiChu === "---" ? "" : item.ghiChu;
+      document.getElementById("editCustSuggestList").style.display = "none";
+      modalChinhSuaObj.show();
+    }
+
+    function LuuChinhSuaKhuon() {
+      var row = document.getElementById("editStt").value;
+      var mk = document.getElementById("editMaKhuon").value.trim();
+      var vt = document.getElementById("editViTri").value.trim();
+      var mkh = document.getElementById("editMaKhach").value.trim();
+      var kh = document.getElementById("editKhachHang").value.trim();
+      var gc = document.getElementById("editGhiChu").value.trim();
+      
+      if (mkh !== "") {
+        var timKhach = DANH_SACH_KHACH_HANG_BO_NHO.find(x => x.maKhach.toLowerCase() === mkh.toLowerCase());
+        if (timKhach) kh = timKhach.tenKhach;
+      }
+
+      if(!mk || !vt || !mkh) { 
+  Swal.fire({ 
+    icon: 'warning', 
+    title: 'Ngu vãi', 
+    text: 'Mấy chỗ dấu * này phải nhập hết vào!',
+    showConfirmButton: false, // Ẩn nút OK
+    timer: 2000               // Tự tắt sau 2 giây
+  });
+  return; 
+}
+
+if(!kh) {
+  Swal.fire({ 
+    icon: 'error', 
+    title: 'Sai mã khách', 
+    text: 'Mã khách hàng đé tồn tại!',
+    showConfirmButton: false, 
+    timer: 2000 
+  });
+  return;
+}
+
+      Swal.fire({ title: 'Chờ tí...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+      
+      google.script.run.withSuccessHandler(function(res) {
+        Swal.close();
+        if(res.thanhCong) { 
+  modalChinhSuaObj.hide(); 
+  Toast.fire({ icon: 'success', title: res.tinNhan }); // Sử dụng Toast tự tắt
+  taiDuLieuKhuonTuSheets(); 
+} else { 
+          Toast.fire({ icon: 'error', title: 'Lỗi cập nhật', text: res.tinNhan, confirmButtonColor: '#dc3545' });
+        }
+      }).capNhatKhuonBe({sttHieuChinh: row, maKhuon: mk, viTri: vt.toUpperCase(), maKhach: mkh, khachHang: kh, ghiChu: gc, nguoiThucHien: TEN_USER_HIEN_TAI});
+    }
+
+    function YeuCauHuyKhuon(dongCanSua) {
+      Swal.fire({
+        title: 'Mày chắc chứ?',
+        text: " ",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Hủy đi',
+        cancelButtonText: 'Thôi'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({ title: 'Chờ tí...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+          google.script.run.withSuccessHandler(function(res) {
+            Swal.close();
+            if(res.thanhCong) { 
+              Toast.fire({ icon: 'success', title: 'Đã hủy', text: res.tinNhan, confirmButtonColor: '#dc3545' });
+              taiDuLieuKhuonTuSheets(); 
+            } else { 
+              Swal.fire({ icon: 'error', title: 'Lỗi hệ thống', text: res.tinNhan, showConfirmButton: false, timer: 2000 });
+            }
+          }).huyKhuonBe(dongCanSua, TEN_USER_HIEN_TAI);
+        }
+      });
+    }
+
+    function YeuCauKhoiPhucKhuon(dongCanSua) {
+      Swal.fire({
+        title: 'Khôi phục khuôn này?',
+        text: "Khuôn sẽ chuyển trạng thái về 'ĐANG DÙNG'!",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#198754',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Xác nhận',
+        cancelButtonText: 'Hủy'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({ title: 'Đang xử lý...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+          google.script.run.withSuccessHandler(function(res) {
+            Swal.close();
+            if(res.thanhCong) { 
+              Toast.fire({ icon: 'success', title: 'Thành công', text: res.tinNhan, confirmButtonColor: '#198754' });
+              taiDuLieuKhuonTuSheets(); 
+            } else { 
+              Swal.fire({ icon: 'error', title: 'Lỗi hệ thống', text: res.tinNhan, showConfirmButton: false, timer: 2000 });
+            }
+          }).khoiPhucKhuonBe(dongCanSua, TEN_USER_HIEN_TAI);
+        }
+      });
+    }
+
+    function YeuCauXoaKhuonHienTai(dongCanXoa) {
+      Swal.fire({
+        title: 'Mày có chắc muốn XÓA không?',
+        text: "Khuôn sẽ chuyển sang danh sách lưu trữ riêng và đẩy xuống đáy hiển thị!",
+        icon: 'error',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Đúng, Xóa đi!',
+        cancelButtonText: 'Thôi dừng lại'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          Swal.fire({ title: 'Đang thực hiện xóa...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+          google.script.run.withSuccessHandler(function(res) {
+            Swal.close();
+            if(res.thanhCong) { 
+              Toast.fire({ icon: 'success', title: 'Đã bốc hơi', text: res.tinNhan, confirmButtonColor: '#dc3545' });
+              taiDuLieuKhuonTuSheets(); 
+            } else { 
+              Swal.fire({ icon: 'error', title: 'Lỗi hệ thống', text: res.tinNhan, showConfirmButton: false, timer: 2000 });
+            }
+          }).xoaKhuonBeChuyenSheet(dongCanXoa, TEN_USER_HIEN_TAI);
+        }
+      });
+    }
+//Thêm hàm nhận sự kiện click
+    function chuyenXuongKhuon(sttDong, tenXuong, event) {
+      if(event) event.stopPropagation(); // Ngăn chặn sự kiện đóng/mở thẻ khi click nút xưởng
+      
+      // Không cho phép bấm nếu dòng âm (khuôn đã xóa vĩnh viễn)
+      if(sttDong < 0) return; 
+
+      // --- KỸ THUẬT ÉP GIAO DIỆN ĐỔI MÀU NGAY LẬP TỨC TRÊN MÀN HÌNH ---
+      var parentSpan = event.target.parentElement;
+      if (parentSpan) {
+        var buttons = parentSpan.querySelectorAll('.btn-xuong');
+        buttons.forEach(function(btn) {
+          // Xóa bỏ tất cả các class màu cũ
+          btn.classList.remove('active-bl', 'active-th', 'inactive');
+          
+          if (btn === event.target) {
+            // Đổ màu đậm cho nút vừa được bấm
+            if (tenXuong === 'BL') btn.classList.add('active-bl');
+            if (tenXuong === 'TH') btn.classList.add('active-th');
+          } else {
+            // Làm mờ nút còn lại liền
+            btn.classList.add('inactive');
+          }
+        });
+      }
+      // --------------------------------------------------------------
+
+      Toast.fire({
+        title: 'Đang chuyển xưởng...',
+        icon: 'info',
+        timer: 1500,
+        timerProgressBar: true
+      });
+
+      // Cập nhật ngầm dữ liệu lên Google Sheets
+      google.script.run.withSuccessHandler(function(res) {
+        if(res.thanhCong) {
+          Toast.fire({ icon: 'success', title: res.tinNhan });
+          
+          // Cập nhật lại mảng bộ nhớ tạm trong JavaScript để khi tìm kiếm không bị mất trạng thái màu
+          var itemKho = MANG_BO_NHO_KHO.find(x => x.sttHieuChinh === sttDong);
+          if(itemKho) {
+            itemKho.xuong = tenXuong;
+          }
+        } else {
+          Swal.fire({ icon: 'error', title: 'Lỗi', text: res.tinNhan, confirmButtonColor: '#dc3545' });
+          taiDuLieuKhuonTuSheets(); // Nếu lỗi thật thì mới bắt buộc load lại từ Sheets để trả trạng thái cũ
+        }
+      }).capNhatXuongKhuonBe(sttDong, tenXuong, TEN_USER_HIEN_TAI);
+    }
+    //HẾT hàm nhận sự kiện click
+    // Lắng nghe sự kiện cuộn chuột/cuộn màn hình của người dùng
+    window.addEventListener('scroll', function() {
+      var btn = document.getElementById("btnBackToTop");
+      if (btn) {
+        // Nếu cuộn xuống quá 300px thì hiện nút, ngược lại thì ẩn đi
+        if (window.scrollY > 300) {
+          btn.classList.add("show");
+        } else {
+          btn.classList.remove("show");
+        }
+      }
+    });
+
+    // Hàm xử lý cuộn mượt mà về đầu trang
+    function cuonVeDauTrang() {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth' // Tạo hiệu ứng lướt mượt mà, không bị giật
+      });
+    }
+  </script>
+</body>
+</html>
