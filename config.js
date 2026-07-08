@@ -1,4 +1,4 @@
-const GOOGLE_SCRIPT_API = "https://script.google.com/macros/s/AKfycbyh5HIHsbqqPFN-GrT9HlEEitMLRqvX6opMpWoyNeOMI6_QluM2BIo174W3yatltSmkpA/exec";// Dán link URL mới vừa copy ở Bước 1 vào đây
+const GOOGLE_SCRIPT_API = "https://script.google.com/macros/s/AKfycbyoCJwDY_v73Ua_jCYd6vrWv0Qq-ovGUQB8XkXzC6oXnOqym0PT3abSCjdcU13DqrQ25g/exec";// Dán link URL mới vừa copy ở Bước 1 vào đây
 
 function goiApiGoogleScript(tsHanhDong, cacThamSoKhac = {}) {
   return new Promise((resolve, reject) => {
