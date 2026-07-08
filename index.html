@@ -474,7 +474,7 @@
   </button>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  
+  <script src="config.js"></script>
   <script>
     var TEN_USER_HIEN_TAI = "";
     var modalNhapMoiObj, modalChinhSuaObj;
@@ -607,57 +607,56 @@ document.getElementById("modalChinhSua").addEventListener("input", luuTamFormChi
     }
 
 function taiDuLieuKhuonTuSheets() {
-      var khungLoading = document.getElementById("loading");
-      if (khungLoading) khungLoading.classList.remove("d-none");
+  var khungLoading = document.getElementById("loading");
+  if (khungLoading) khungLoading.classList.remove("d-none");
 
-      // === ĐOẠN ĐỌC CACHE SIÊU TỐC HÀNG ĐẦU ===
-      var duLieuCacheSan = localStorage.getItem("hh_dream_cache_kho_khuon");
-      if (duLieuCacheSan) {
-        MANG_BO_NHO_KHO = JSON.parse(duLieuCacheSan);
-        // Hiển thị ngay lập tức danh sách ra màn hình (mất 0.1 giây)
-        thucHienLocVaHienThiGiaoDien(document.getElementById("txtSearch").value || "");
-        if (khungLoading) khungLoading.classList.add("d-none");
+  // === 1. ĐỌC CACHE SIÊU TỐC TRƯỚC ===
+  var duLieuCacheSan = localStorage.getItem("hh_dream_cache_kho_khuon");
+  if (duLieuCacheSan) {
+    MANG_BO_NHO_KHO = JSON.parse(duLieuCacheSan);
+    thucHienLocVaHienThiGiaoDien(document.getElementById("txtSearch").value || "");
+    if (khungLoading) khungLoading.classList.add("d-none");
+  }
+
+  // === 2. GỌI API GOOGLE SCRIPT QUA CONFIG.JS ĐỂ CẬP NHẬT NGẦM ===
+  goiApiGoogleScript("taiKhoKhuon")
+    .then(res => {
+      if (khungLoading) khungLoading.classList.add("d-none");
+      if (res && res.thanhCong) {
+        var gopDuLieu = [];
+        if (res.data && res.data.length > 0) {
+          // Chuẩn hóa dữ liệu map theo cấu trúc render hiện tại của bạn
+          gopDuLieu = res.data.map(function(r) {
+            return {
+              sttHieuChinh: r.sttHieuChinh,
+              ngayNhap: r.ngayLam || "---",
+              maKhuon: r.maKhuon ? r.maKhuon.toString().trim() : "",
+              viTri: r.viTri ? r.viTri.toString().trim() : "---",
+              maKhach: r.stt ? r.stt.toString().trim() : "---",
+              khachHang: r.khachHang ? r.khachHang.toString().trim() : "---",
+              xuong: r.xuong ? r.xuong.toString().trim().toUpperCase() : "",
+              huyKhuon: r.ghiChu ? r.ghiChu.toString().trim() : "Đang dùng",
+              ngayHuy: "---",
+              ghiChu: r.khoDao ? "Khổ dao: " + r.khoDao : "---",
+              nguoiNhap: "Hệ thống"
+            };
+          });
+        }
+
+        // Tạo chuỗi kiểm tra xem dữ liệu trên Sheets có thay đổi so với cache không
+        var chuoiMoi = JSON.stringify(gopDuLieu);
+        if (chuoiMoi !== duLieuCacheSan) {
+          MANG_BO_NHO_KHO = gopDuLieu;
+          localStorage.setItem("hh_dream_cache_kho_khuon", chuoiMoi);
+          thucHienLocVaHienThiGiaoDien(document.getElementById("txtSearch").value || "");
+        }
       }
-      // =======================================
-
-      // Vẫn chạy ngầm lệnh quét Sheets của Google để cập nhật bản mới nhất nếu có người khác sửa
-      google.script.run.withSuccessHandler(function(data) {
-        google.script.run.withSuccessHandler(function(deletedData) {
-          if (khungLoading) khungLoading.classList.add("d-none");
-          
-          var gopDuLieu = [];
-          if(data && data.length > 0) { gopDuLieu = gopDuLieu.concat(data); }
-          
-          if(deletedData && deletedData.length > 0) {
-            var dinhDangXoa = deletedData.map(function(item) {
-              return {
-                sttHieuChinh: -999999, 
-                ngayNhap: item.ngayNhap || "---",
-                maKhuon: item.maKhuon ? item.maKhuon.toString().trim() : "",
-                viTri: item.viTri ? item.viTri.toString().trim() : "---",
-                maKhach: item.maKhach ? item.maKhach.toString().trim() : "---",
-                khachHang: item.khachHang ? item.khachHang.toString().trim() : "---",
-                xuong: item.xuong ? item.xuong.toString().trim().toUpperCase() : "", 
-                huyKhuon: "đã xóa",
-                ngayHuy: item.ngayHuy || "---",
-                ghiChu: item.ghiChu || "---",
-                nguoiNhap: item.nguoiNhap || "Hệ thống"
-              };
-            });
-            gopDuLieu = gopDuLieu.concat(dinhDangXoa);
-          }
-          
-          // Kiểm tra xem dữ liệu từ Sheets về có gì mới so với Cache cũ không
-          var chuoiMoi = JSON.stringify(gopDuLieu);
-          if (chuoiMoi !== duLieuCacheSan) {
-            MANG_BO_NHO_KHO = gopDuLieu;
-            // Ghi đè cục bộ bản mới nhất vào Cache trình duyệt để lần sau nạp nhanh
-            localStorage.setItem("hh_dream_cache_kho_khuon", chuoiMoi);
-            thucHienLocVaHienThiGiaoDien(document.getElementById("txtSearch").value || ""); 
-          }
-        }).taiToanBoKhoKhuonXoa();
-      }).taiToanBoKhoKhuon();
-    }
+    })
+    .catch(err => {
+      if (khungLoading) khungLoading.classList.add("d-none");
+      console.error("Lỗi kết nối API:", err);
+    });
+}
 
     function taiDanhSachKhachHangHeThong() {
       google.script.run.withSuccessHandler(function(data) {
@@ -1322,30 +1321,27 @@ if(!kh) {
       });
     }
 //Thêm hàm nhận sự kiện click
-    function chuyenXuongKhuon(sttDong, tenXuong, event) {
-      if(event) event.stopPropagation(); // Ngăn chặn sự kiện đóng/mở thẻ khi click nút xưởng
-      
-      // Không cho phép bấm nếu dòng âm (khuôn đã xóa vĩnh viễn)
-      if(sttDong < 0) return; 
-
-      // --- KỸ THUẬT ÉP GIAO DIỆN ĐỔI MÀU NGAY LẬP TỨC TRÊN MÀN HÌNH ---
-      var parentSpan = event.target.parentElement;
-      if (parentSpan) {
-        var buttons = parentSpan.querySelectorAll('.btn-xuong');
-        buttons.forEach(function(btn) {
-          // Xóa bỏ tất cả các class màu cũ
-          btn.classList.remove('active-bl', 'active-th', 'inactive');
-          
-          if (btn === event.target) {
-            // Đổ màu đậm cho nút vừa được bấm
-            if (tenXuong === 'BL') btn.classList.add('active-bl');
-            if (tenXuong === 'TH') btn.classList.add('active-th');
+    
+    // Tìm và xóa bỏ lệnh google.script.run cũ ở cuối hàm, thay bằng đoạn này:
+      goiApiGoogleScript("capNhatXuong", { sttDong: sttDong, tenXuong: tenXuong, tenUser: TEN_USER_HIEN_TAI })
+        .then(res => {
+          if (res && res.thanhCong) {
+            Toast.fire({ icon: 'success', title: "Đã chuyển sang xưởng " + tenXuong });
+            var itemKho = MANG_BO_NHO_KHO.find(x => x.sttHieuChinh === sttDong);
+            if (itemKho) {
+              itemKho.xuong = tenXuong;
+            }
+            // Cập nhật lại bản Cache cục bộ để lưu trạng thái xưởng mới luôn
+            localStorage.setItem("hh_dream_cache_kho_khuon", JSON.stringify(MANG_BO_NHO_KHO));
           } else {
-            // Làm mờ nút còn lại liền
-            btn.classList.add('inactive');
+            Swal.fire({ icon: 'error', title: 'Lỗi', text: (res ? res.tinNhan : "Không thể cập nhật") });
+            taiDuLieuKhuonTuSheets();
           }
+        })
+        .catch(err => {
+          Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Lỗi kết nối mạng khi chuyển xưởng!' });
+          taiDuLieuKhuonTuSheets();
         });
-      }
       // --------------------------------------------------------------
 
       Toast.fire({
