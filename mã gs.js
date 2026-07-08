@@ -1,302 +1,167 @@
 // ============================================================================
 // I. CẤU HÌNH LIÊN KẾT BẢNG TÍNH TRANG INDEX (QUẢN LÝ KHUÔN BẾ)
 // ============================================================================
-var SPREADSHEET_ID = "1SWU6LbxMGVTV9C6i6tsdsjqbIrh84PN73rTzxpZ9Rjg"; // File Kho Khuôn bế + User
+var SPREADSHEET_ID = "1SWU6LbxMGVTV9C6i6tsdsjqbIrh84PN73rTzxpZ9Rjg"; 
 var SHEET_DATA = "DanhSachKhuon"; 
 var SHEET_USER = "user";           
 var SHEET_KHACH = "Trang tính2";   
 var SHEET_XOA = "danhsachkhuonxoa"; 
 
 // ============================================================================
-// II. HÀM ĐIỀU HƯỚNG MỞ TRANG (CHỈ CÒN DUY NHẤT TRANG INDEX KHUÔN BẾ)
+// II. HÀM TIẾP NHẬN YÊU CẦU TỪ GITHUB (API ENDPOINT)
 // ============================================================================
 function doGet(e) {
-  var page = (e && e.parameter) ? e.parameter.page : 'index';
-  
-  if (page === "foil") {
-    return HtmlService.createHtmlOutputFromFile('Foil')
-        .setTitle('Hệ thống Quản lý Dữ liệu Foil')
-        .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
-        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-  } else {
-    return HtmlService.createHtmlOutputFromFile('index')
-        .setTitle('Hệ thống Quản lý Khuôn bế HH Dream')
-        .addMetaTag('viewport', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
-        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  var action = (e && e.parameter) ? e.parameter.action : '';
+  var callback = (e && e.parameter) ? e.parameter.callback : '';
+  var ketQua = { thanhCong: false, tinNhan: "Không xác định được hành động." };
+
+  try {
+    // 1. API Đăng nhập
+    if (action === "dangNhap") {
+      var u = e.parameter.user;
+      var p = e.parameter.pass;
+      ketQua = xuLyDangNhap(u, p);
+    }
+    // 2. API Tải dữ liệu Khuôn Bế (Trang index)
+    else if (action === "taiKhoKhuon") {
+      ketQua = {
+        thanhCong: true,
+        data: taiToanBoKhoKhuon(),
+        deletedData: taiToanBoKhoKhuonXoa()
+      };
+    }
+    // 3. API Tải dữ liệu Foil (Trang Foil)
+    else if (action === "taiFoil") {
+      ketQua = API_taiDuLieuFoil();
+    }
+    // 4. API Cập nhật xưởng khuôn bế
+    else if (action === "capNhatXuong") {
+      var sttDong = parseInt(e.parameter.sttDong);
+      var tenXuong = e.parameter.tenXuong;
+      var tenUser = e.parameter.tenUser;
+      ketQua = capNhatXuongKhuonBe(sttDong, tenXuong, tenUser);
+    }
+  } catch (error) {
+    ketQua = { thanhCong: false, tinNhan: "Lỗi hệ thống: " + error.toString() };
   }
-}
-// ============================================================================
-// III. CÁC HÀM XỬ LÝ HỆ THỐNG CHO TRANG INDEX
-// ============================================================================
-function getTargetSheet(sheetName) {
-  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  var sheet = ss.getSheetByName(sheetName);
-  if (!sheet) {
-    throw new Error("Không tìm thấy tab trang tính: " + sheetName);
-  }
-  return sheet;
+
+  // Trả về định dạng JSONP để vượt qua chặn bảo mật CORS của trình duyệt rộng rãi hơn
+  var outputText = callback ? callback + "(" + JSON.stringify(ketQua) + ")" : JSON.stringify(ketQua);
+  var mimeType = callback ? ContentService.MimeType.JAVASCRIPT : ContentService.MimeType.JSON;
+
+  return ContentService.createTextOutput(outputText).setMimeType(mimeType);
 }
 
-function xuLyDangNhap(taiKhoan, matKhau) {
-  try {
-    var sheet = getTargetSheet(SHEET_USER);
-    var data = sheet.getDataRange().getValues();
-    var userLower = taiKhoan.toString().toLowerCase().trim();
-    var passStr = matKhau.toString().trim();
-    
-    for (var i = 1; i < data.length; i++) {
-      var userCheck = data[i][0] ? data[i][0].toString().toLowerCase().trim() : "";
-      var passCheck = data[i][1] ? data[i][1].toString().trim() : "";
-      var nameGiaoDien = data[i][2] ? data[i][2].toString().trim() : "";
-      
-      if (userCheck === userLower && passCheck === passStr) { // Đổi chữ tenHienThi thành user để đồng bộ với index.html
-  return { thanhCong: true, tinNhan: "Đăng nhập thành công!", user: nameGiaoDien || taiKhoan }; 
+// Bổ sung hàm doPost đề phòng trường hợp cần thiết, trỏ chung về doGet
+function doPost(e) {
+  return doGet(e);
 }
+
+// ============================================================================
+// III. CÁC HÀM XỬ LÝ LOGIC DỮ LIỆU (Giữ nguyên gốc của bạn)
+// ============================================================================
+function xuLyDangNhap(userNhap, passNhap) {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName(SHEET_USER);
+  var data = sheet.getDataRange().getValues();
+  
+  var uClean = userNhap.toString().trim().toLowerCase();
+  var pClean = passNhap.toString().trim();
+  
+  for (var i = 1; i < data.length; i++) {
+    var uInSheet = data[i][1] ? data[i][1].toString().trim().toLowerCase() : "";
+    var pInSheet = data[i][2] ? data[i][2].toString().trim() : "";
+    var nameInSheet = data[i][3] ? data[i][3].toString().trim() : "Người dùng";
+    
+    if (uInSheet === uClean && pInSheet === pClean) {
+      return { thanhCong: true, tenHienThi: nameInSheet };
     }
-    return { thanhCong: false, tinNhan: "Sai tài khoản hoặc mật khẩu!" };
-  } catch (error) {
-    return { thanhCong: false, tinNhan: "Lỗi hệ thống đăng nhập: " + error.message };
   }
+  return { thanhCong: false, tinNhan: "Sai tài khoản hoặc mật khẩu!" };
 }
 
 function taiToanBoKhoKhuon() {
-  var ketQua = [];
-  try {
-    var sheet = getTargetSheet(SHEET_DATA);
-    var lastRow = sheet.getLastRow();
-    if (lastRow <= 1) return [];
-    
-    var data = sheet.getRange(2, 1, lastRow - 1, 10).getValues();
-    
-    for (var i = 0; i < data.length; i++) {
-      var dateObj = data[i][0];
-      var ngayDinhDang = "---";
-      if (dateObj instanceof Date) {
-        ngayDinhDang = Utilities.formatDate(dateObj, Session.getScriptTimeZone(), "dd/MM/yyyy");
-      } else if (dateObj) {
-        ngayDinhDang = dateObj.toString();
-      }
-      
-      var huyenKhuonStr = data[i][6] ? data[i][6].toString().trim().toLowerCase() : "";
-      if (huyenKhuonStr === "đã xóa") continue;
-      
-      ketQua.push({
-        sttHieuChinh: i + 2,
-        ngayNhap: ngayDinhDang,
-        maKhuon: data[i][1].toString().trim(),
-        viTri: data[i][2].toString().trim(),
-        maKhach: data[i][3].toString().trim(),
-        khachHang: data[i][4].toString().trim(),
-        xuong: data[i][5] ? data[i][5].toString().trim().toUpperCase() : "",
-        huyKhuon: data[i][6] ? data[i][6].toString().trim() : "Đang dùng",
-        ngayHuy: data[i][7] ? data[i][7].toString().trim() : "---",
-        ghiChu: data[i][8] ? data[i][8].toString().trim() : "---",
-        nguoiNhap: data[i][9] ? data[i][9].toString().trim() : "Hệ thống"
-      });
-    }
-  } catch (error) {
-    Logger.log("Lỗi taiToanBoKhoKhuon: " + error.toString());
+  var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_DATA);
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return [];
+  var rawData = sheet.getRange(2, 1, lastRow - 1, 14).getValues();
+  var finalData = [];
+  for (var i = 0; i < rawData.length; i++) {
+    var r = rawData[i];
+    if (!r[1] || r[1].toString().trim() === "") continue;
+    finalData.push({
+      sttHieuChinh: i + 2,
+      stt: r[0], maKhuon: r[1], linhVuc: r[2], khachHang: r[3],
+      maHang: r[4], khoDao: r[5], soUp: r[6], mayChay: r[7],
+      loaiKhuon: r[8], viTri: r[9], ngayLam: r[10], xuong: r[11], ghiChu: r[12]
+    });
   }
-  return ketQua;
+  return finalData;
 }
 
 function taiToanBoKhoKhuonXoa() {
-  var ketQua = [];
-  try {
-    var sheet = getTargetSheet(SHEET_XOA);
-    var lastRow = sheet.getLastRow();
-    if (lastRow <= 1) return [];
-    var data = sheet.getRange(2, 1, lastRow - 1, 10).getValues();
-    for (var i = 0; i < data.length; i++) {
-      var dateObj = data[i][0];
-      var ngayDinhDang = "---";
-      if (dateObj instanceof Date) ngayDinhDang = Utilities.formatDate(dateObj, Session.getScriptTimeZone(), "dd/MM/yyyy");
-      ketQua.push({
-        sttHieuChinh: -1, ngayNhap: ngayDinhDang, maKhuon: data[i][1].toString().trim(), viTri: data[i][2].toString().trim(),
-        maKhach: data[i][3].toString().trim(), khachHang: data[i][4].toString().trim(), xuong: data[i][5] ? data[i][5].toString().trim().toUpperCase() : "",
-        huyKhuon: "đã xóa", ngayHuy: data[i][7] ? data[i][7].toString().trim() : "---", ghiChu: data[i][8] ? data[i][8].toString().trim() : "---", nguoiNhap: data[i][9] ? data[i][9].toString().trim() : "Hệ thống"
-      });
-}
-} catch (error) {
-  return []; // Trả về mảng rỗng nếu lỗi để không làm treo giao diện
-}
-return ketQua;
-} // <-- THÊM DẤU ĐÓNG NGOẶC NHỌN NÀY VÀO ĐÂY ĐỂ ĐÓNG HÀM LẠI
-function taiDanhSachKhachHang() {
-  var danhSach = [];
-  try {
-    var sheet = getTargetSheet(SHEET_KHACH);
-    var data = sheet.getDataRange().getValues();
-    for (var i = 1; i < data.length; i++) {
-      if (!data[i][0]) continue;
-      danhSach.push({ maKhach: data[i][0].toString().trim(), tenKhach: data[i][1] ? data[i][1].toString().trim() : "" });
-    }
-  } catch (error) {}
-  return danhSach;
+  var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_XOA);
+  var lastRow = sheet.getLastRow();
+  if (lastRow <= 1) return [];
+  return sheet.getRange(2, 1, lastRow - 1, 4).getValues();
 }
 
-// --- HÀM BACKEND MỚI ĐƯỢC THÊM ĐỂ LƯU CHUYỂN XƯỞNG ---
-function capNhatXuongKhuonBe(sttDong, tenXuong, nguoiThucHien) {
-  try {
-    var sheet = getTargetSheet(SHEET_DATA);
-    var rowIdx = parseInt(sttDong);
-    sheet.getRange(rowIdx, 6).setValue(tenXuong); // Cột F (Xưởng)
-    sheet.getRange(rowIdx, 10).setValue(nguoiThucHien); // Cột J (Người cập nhật)
-    return { thanhCong: true, tinNhan: "Đã chuyển sang xưởng " + tenXuong };
-  } catch (error) {
-    return { thanhCong: false, tinNhan: "Lỗi ghi dữ liệu xưởng: " + error.toString() };
+function capNhatXuongKhuonBe(sttDong, tenXuong, tenUser) {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName(SHEET_DATA);
+  var sheetKhach = ss.getSheetByName(SHEET_KHACH);
+  
+  var cellXuong = sheet.getRange(sttDong, 12);
+  var cellUser = sheet.getRange(sttDong, 14);
+  
+  cellXuong.setValue(tenXuong);
+  cellUser.setValue(tenUser);
+  
+  if (sheetKhach) {
+    sheetKhach.appendRow([new Date(), sttDong, tenXuong, tenUser]);
   }
+  
+  return { thanhCong: true, tinNhan: "Đã cập nhật xưởng thành công!" };
 }
+
 // ============================================================================
-// CÁC HÀM XỬ LÝ GHI / SỬA / HỦY DỮ LIỆU KHUÔN BẾ (BỔ SUNG BỊ THIẾU)
+// IV. LOGIC XỬ LÝ DỮ LIỆU FOIL (PHẦN TRANG FOIL)
 // ============================================================================
-function nhapKhuonMoi(obj) {
-  try {
-    var sheet = getTargetSheet(SHEET_DATA);
-    var ngayGioHienTai = new Date();
-    sheet.appendRow([
-      ngayGioHienTai,
-      obj.maKhuon,
-      obj.viTri.toUpperCase(),
-      obj.maKhach,
-      obj.khachHang,
-      "", // Xưởng mặc định để trống
-      "Đang dùng",
-      "---",
-      obj.ghiChu || "---",
-      obj.nguoiThucHien
-    ]);
-    return { thanhCong: true, tinNhan: "Đã lưu khuôn " + obj.maKhuon + " vào vị trí " + obj.viTri };
-  } catch (error) {
-    return { thanhCong: false, tinNhan: "Lỗi thêm mới: " + error.toString() };
-  }
-}
-
-function capNhatKhuonBe(obj) {
-  try {
-    var sheet = getTargetSheet(SHEET_DATA);
-    var rowIdx = parseInt(obj.sttHieuChinh);
-    sheet.getRange(rowIdx, 2).setValue(obj.maKhuon);
-    sheet.getRange(rowIdx, 3).setValue(obj.viTri.toUpperCase());
-    sheet.getRange(rowIdx, 4).setValue(obj.maKhach);
-    sheet.getRange(rowIdx, 5).setValue(obj.khachHang);
-    sheet.getRange(rowIdx, 9).setValue(obj.ghiChu || "---");
-    sheet.getRange(rowIdx, 10).setValue(obj.nguoiThucHien);
-    return { thanhCong: true, tinNhan: "Đã cập nhật thông tin khuôn " + obj.maKhuon };
-  } catch (error) {
-    return { thanhCong: false, tinNhan: "Lỗi chỉnh sửa: " + error.toString() };
-  }
-}
-
-function huyKhuonBe(sttDong, nguoiThucHien) {
-  try {
-    var sheet = getTargetSheet(SHEET_DATA);
-    var rowIdx = parseInt(sttDong);
-    var ngayGioHienTai = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm");
-    sheet.getRange(rowIdx, 7).setValue("Đã hủy");
-    sheet.getRange(rowIdx, 8).setValue(ngayGioHienTai);
-    sheet.getRange(rowIdx, 10).setValue(nguoiThucHien);
-    return { thanhCong: true, tinNhan: "Đã báo hủy thành công khuôn dòng " + sttDong };
-  } catch (error) {
-    return { thanhCong: false, tinNhan: "Lỗi báo hủy: " + error.toString() };
-  }
-}
-
-function khoiPhucKhuonBe(sttDong, nguoiThucHien) {
-  try {
-    var sheet = getTargetSheet(SHEET_DATA);
-    var rowIdx = parseInt(sttDong);
-    sheet.getRange(rowIdx, 7).setValue("Đang dùng");
-    sheet.getRange(rowIdx, 8).setValue("---");
-    sheet.getRange(rowIdx, 10).setValue(nguoiThucHien);
-    return { thanhCong: true, tinNhan: "Khuôn đã được khôi phục về trạng thái Đang dùng!" };
-  } catch (error) {
-    return { thanhCong: false, tinNhan: "Lỗi khôi phục: " + error.toString() };
-  }
-}
-
-function xoaKhuonBeChuyenSheet(sttDong, nguoiThucHien) {
-  try {
-    var sheetGoc = getTargetSheet(SHEET_DATA);
-    var sheetXoa = getTargetSheet(SHEET_XOA);
-    var rowIdx = parseInt(sttDong);
-    
-    var dataDong = sheetGoc.getRange(rowIdx, 1, 1, 10).getValues()[0];
-    var ngayGioHienTai = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm");
-    
-    dataDong[6] = "đã xóa";
-    dataDong[7] = ngayGioHienTai;
-    dataDong[9] = nguoiThucHien;
-    
-    sheetXoa.appendRow(dataDong);
-    sheetGoc.getRange(rowIdx, 7).setValue("đã xóa");
-    sheetGoc.getRange(rowIdx, 8).setValue(ngayGioHienTai);
-    sheetGoc.getRange(rowIdx, 10).setValue(nguoiThucHien);
-    
-    return { thanhCong: true, tinNhan: "Khuôn đã được chuyển sang danh sách xóa vĩnh viễn!" };
-  } catch (error) {
-    return { thanhCong: false, tinNhan: "Lỗi xóa vĩnh viễn: " + error.toString() };
-  }
-}
-// ===========================================================================
-// IV. MÔ-ĐUN ĐỘC LẬP: QUẢN LÝ DỮ LIỆU FOIL (DỮ LIỆU ĐỘNG THEO SHEET)
-// ===========================================================================
-var FOIL_CONFIG = {
-  SPREADSHEET_ID: "1z6OdSfMa784UMA17VTX3EL2ljgpjOASU3yKMhp93QKw",
-  SHEET_NAME: "Sheet1" 
-};
+var ID_FILE_FOIL = "1bclGgG0WbVst_Oco9n9b7XvT8p298lscfJpEInmI9hM"; 
+var TEN_SHEET_FOIL = "Sheet1"; 
 
 function API_taiDuLieuFoil() {
-  var ketQua = { success: false, data: [], headers: [], error: "" };
-  try {
-    var ss = SpreadsheetApp.openById(FOIL_CONFIG.SPREADSHEET_ID);
-    var sheet = ss.getSheetByName(FOIL_CONFIG.SHEET_NAME);
-    if (!sheet) {
-      ketQua.error = "Không tìm thấy tên trang tính '" + FOIL_CONFIG.SHEET_NAME + "'";
-      return ketQua;
-    }
-    
-    var lastRow = sheet.getLastRow();
-    var lastColumn = sheet.getLastColumn();
-    
-    if (lastRow < 1) {
-      ketQua.success = true;
-      return ketQua;
-    }
-    
-    // Đọc tiêu đề động từ dòng 1
-    var headersRaw = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
-    var tieuDeCot = headersRaw.map(function(h) { return h.toString().trim(); });
-    ketQua.headers = tieuDeCot;
-    
-    if (lastRow <= 1) {
-      ketQua.success = true;
-      return ketQua;
-    }
-    
-    var dataMatrix = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
-    var danhSachFoil = [];
-    
-    for (var i = 0; i < dataMatrix.length; i++) {
-      var row = dataMatrix[i];
-      if (!row[1] || row[1].toString().trim() === "") continue; 
-      
-      var mangGiaTriCot = row.map(function(cell) { return cell ? cell.toString().trim() : ""; });
-      
-      danhSachFoil.push({
-        stt: row[0] ? row[0].toString().trim() : (i + 1).toString(),
-        maJob: row[1].toString().trim(),
-        tenNhu: row[2] ? row[2].toString().trim() : "", // Giữ lại để làm bảng tóm tắt nhanh bên ngoài
-        maHang: row[3] ? row[3].toString().trim() : "", // Giữ lại để làm bảng tóm tắt nhanh bên ngoài
-        soCuonLon: row[10] ? row[10].toString().trim() : "0", // Giữ lại để làm bảng tóm tắt nhanh bên ngoài
-        cacCotDuLieu: mangGiaTriCot 
-      });
-    }
-    
-    ketQua.data = danhSachFoil;
-    ketQua.success = true;
-  } catch (error) {
-    ketQua.error = "Lỗi hệ thống Apps Script: " + error.toString();
+  var ketQua = { success: false, headers: [], data: [] };
+  var ss = SpreadsheetApp.openById(ID_FILE_FOIL);
+  var sheet = ss.getSheetByName(TEN_SHEET_FOIL);
+  if (!sheet) return ketQua;
+  
+  var lastRow = sheet.getLastRow();
+  var lastColumn = sheet.getLastColumn();
+  if (lastRow < 1) { ketQua.success = true; return ketQua; }
+  
+  var headersRaw = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+  var tieuDeCot = headersRaw.map(function(h) { return h.toString().trim(); });
+  ketQua.headers = tieuDeCot;
+  
+  if (lastRow <= 1) { ketQua.success = true; return ketQua; }
+  
+  var dataMatrix = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+  var danhSachFoil = [];
+  
+  for (var i = 0; i < dataMatrix.length; i++) {
+    var row = dataMatrix[i];
+    if (!row[1] || row[1].toString().trim() === "") continue; 
+    var mangGiaTriCot = row.map(function(cell) { return cell ? cell.toString().trim() : ""; });
+    danhSachFoil.push({
+      stt: row[0] ? row[0].toString().trim() : (i + 1).toString(),
+      maJob: row[1].toString().trim(),
+      tenNhu: row[2] ? row[2].toString().trim() : "", 
+      maHang: row[3] ? row[3].toString().trim() : "",
+      chiTietCot: mangGiaTriCot
+    });
   }
+  ketQua.data = danhSachFoil;
+  ketQua.success = true;
   return ketQua;
 }
