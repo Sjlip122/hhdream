@@ -338,17 +338,11 @@
         </div>
 
         <div class="nav-tabs-container mb-3 rounded-3 border d-flex shadow-sm">
-          <a href="javascript:void(0)" 
-             onclick="window.top.location.href='https://script.google.com/macros/s/AKfycbx9XPzcFMaS_ukgqQ6JeaD_n9fRY_nacgkTODRjoPPtj6ltPUEy-vxWPUHDiYh7vAr6GA/exec?page=index&t=' + new Date().getTime(); return false;" 
-             class="btn nav-active-khuon">
-            <i class="fas fa-cubes me-2"></i> Khuôn Bế
-          </a>
-          <a href="javascript:void(0)" 
-             onclick="window.top.location.href='https://script.google.com/macros/s/AKfycbx9XPzcFMaS_ukgqQ6JeaD_n9fRY_nacgkTODRjoPPtj6ltPUEy-vxWPUHDiYh7vAr6GA/exec?page=foil&t=' + new Date().getTime(); return false;" 
-             class="btn">
-            <i class="fas fa-layer-group me-2"></i> Foil
-          </a>
-        </div>
+  <a href="index.html" class="btn nav-active-khuon"><i class="fas fa-cubes me-2"></i> Khuôn Bế</a>
+  <a href="Foil.html" class="btn"><i class="fas fa-layer-group me-2"></i> Foil</a>
+</div>
+
+        
 
         <div class="row g-2 mb-2 align-items-center mx-0"> 
           <div class="col-8 col-sm-9 px-0 pe-1"> 
@@ -619,14 +613,14 @@ function taiDuLieuKhuonTuSheets() {
     if (khungLoading) khungLoading.classList.add("d-none");
   }
 
-  // === 2. GỌI API GOOGLE SCRIPT QUA CONFIG.JS ĐỂ CẬP NHẬT NGẦM ===
+  // === 2. GỌI API GOOGLE SCRIPT QUA CONFIG.JS ĐỂ CẬP NHẬT DỮ LIỆU MỚI ===
   goiApiGoogleScript("taiKhoKhuon")
     .then(res => {
       if (khungLoading) khungLoading.classList.add("d-none");
       if (res && res.thanhCong) {
         var gopDuLieu = [];
         if (res.data && res.data.length > 0) {
-          // Chuẩn hóa dữ liệu map theo cấu trúc render hiện tại của bạn
+          // Chuẩn hóa dữ liệu map theo cấu trúc render hiện tại của ứng dụng
           gopDuLieu = res.data.map(function(r) {
             return {
               sttHieuChinh: r.sttHieuChinh,
@@ -644,7 +638,27 @@ function taiDuLieuKhuonTuSheets() {
           });
         }
 
-        // Tạo chuỗi kiểm tra xem dữ liệu trên Sheets có thay đổi so với cache không
+        // Đồng bộ dữ liệu xóa tạm thời từ sheet xóa
+        if (res.deletedData && res.deletedData.length > 0) {
+          var dinhDangXoa = res.deletedData.map(function(row) {
+            return {
+              sttHieuChinh: -999999, 
+              ngayNhap: "---",
+              maKhuon: row[1] ? row[1].toString().trim() : "Khuôn ẩn", 
+              viTri: "ĐÃ XÓA", 
+              maKhach: "---",
+              khachHang: row[2] || "---", 
+              xuong: "ĐÃ XÓA", 
+              huyKhuon: "đã xóa",
+              ngayHuy: "---",
+              ghiChu: "Dữ liệu nằm trong danh sách xóa vĩnh viễn",
+              nguoiNhap: "Hệ thống"
+            };
+          });
+          gopDuLieu = gopDuLieu.concat(dinhDangXoa);
+        }
+
+        // Nếu dữ liệu mới khác biệt dữ liệu cũ trong cache thì ghi đè và render lại
         var chuoiMoi = JSON.stringify(gopDuLieu);
         if (chuoiMoi !== duLieuCacheSan) {
           MANG_BO_NHO_KHO = gopDuLieu;
@@ -655,10 +669,9 @@ function taiDuLieuKhuonTuSheets() {
     })
     .catch(err => {
       if (khungLoading) khungLoading.classList.add("d-none");
-      console.error("Lỗi kết nối API:", err);
+      console.error("Lỗi kết nối API lấy dữ liệu khuôn bế:", err);
     });
 }
-
     function taiDanhSachKhachHangHeThong() {
       google.script.run.withSuccessHandler(function(data) {
         if (data && data.length > 0) {
@@ -1065,39 +1078,45 @@ var html = '<div class="card-header-toggle" onclick="thucHienBatTatThongTin(' + 
     }
 
     function thucHienDangNhap() {
-      var u = document.getElementById("txtUser").value;
-      var p = document.getElementById("txtPass").value;
-      if(!u || !p) { 
-        Toast.fire({ icon: 'warning', title: 'Tên mày là gì', text: 'điền đủ tên tuổi vào!', confirmButtonColor: '#0d6efd' });
-        return; 
+  var u = document.getElementById("txtUser").value.trim();
+  var p = document.getElementById("txtPass").value.trim();
+  if(!u || !p) { 
+    Toast.fire({ icon: 'warning', title: 'Thiếu thông tin', text: 'Vui lòng điền đủ tài khoản và mật khẩu!' });
+    return; 
+  }
+  
+  Swal.fire({
+    title: 'Đang kiểm tra...',
+    text: 'Vui lòng chờ trong giây lát',
+    allowOutsideClick: false,
+    didOpen: () => { Swal.showLoading(); }
+  });
+  
+  // Gọi API đăng nhập qua JSONP liên kết ngầm với Google Script
+  goiApiGoogleScript("dangNhap", { user: u, pass: p })
+    .then(res => {
+      Swal.close();
+      if(res && res.thanhCong) {
+        TEN_USER_HIEN_TAI = res.tenHienThi;
+        localStorage.setItem("hh_dream_user", res.tenHienThi);
+        localStorage.setItem("hh_dream_login_time", new Date().getTime());
+        
+        document.getElementById("lblNguoiDung").innerText = res.tenHienThi;
+        document.getElementById("loginForm").classList.add("d-none");
+        document.getElementById("mainApp").classList.remove("d-none");
+        taiDuLieuKhuonTuSheets();
+        
+        Toast.fire({ icon: 'success', title: 'Đăng nhập thành công!' });
+      } else {
+        Toast.fire({ icon: 'error', title: 'Lỗi đăng nhập', text: res.tinNhan });
       }
-      
-      Swal.fire({
-        title: 'Đang check...',
-        text: 'chờ tí',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
-      });
-      
-      google.script.run.withSuccessHandler(function(res) {
-        Swal.close(); 
-        if(res.thanhCong) {
-          TEN_USER_HIEN_TAI = res.user;
-          localStorage.setItem("hh_dream_user", res.user);
-          localStorage.setItem("hh_dream_login_time", new Date().getTime());
-          
-          document.getElementById("lblNguoiDung").innerText = res.user;
-          document.getElementById("loginForm").classList.add("d-none");
-          document.getElementById("mainApp").classList.remove("d-none");
-          taiDuLieuKhuonTuSheets();
-          
-          Toast.fire({ icon: 'success', title: 'Ngon luôn!' });
-        } else {
-          Toast.fire({ icon: 'error', title: 'Lỗi đăng nhập', text: res.tinNhan, confirmButtonColor: '#dc3545' });
-        }
-      }).xuLyDangNhap(u, p);
-    }
-
+    })
+    .catch(err => {
+      Swal.close();
+      Toast.fire({ icon: 'error', title: 'Lỗi kết nối', text: 'Không thể kết nối với cổng xác thực dữ liệu!' });
+      console.error(err);
+    });
+}
     function thucHienDangXuat() {
   Swal.fire({
     title: 'Mày muốn thoát ư?',
